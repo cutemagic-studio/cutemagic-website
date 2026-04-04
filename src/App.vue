@@ -1,7 +1,20 @@
+<template>
+  <Header />
+
+  <main class="container">
+    <router-view />
+  </main>
+
+  <Footer />
+</template>
+
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import Header from './components/Header.vue'
+import Footer from './components/Footer.vue'
 </script>
 
-<template>
-  <HelloWorld />
-</template>
+<style>
+.container {
+  padding: 20px;
+}
+</style>
