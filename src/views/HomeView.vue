@@ -13,7 +13,7 @@
     <TheHeader />
 
     <main class="flex-grow">
-      <HeroSection />
+      <HeroSection id="hero-section" />
 
       <!-- <FeatureGrid id="features" /> -->
       <WhyChooseUs id="why-choose-us" />

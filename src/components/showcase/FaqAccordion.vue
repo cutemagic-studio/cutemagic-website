@@ -7,12 +7,12 @@ const faqs = [
     answer: 'Absolutely. Once purchased, you have a lifetime license for both personal and commercial use.'
   },
   {
-    question: 'Asset có hỗ trợ các Engine khác như Unreal không?',
-    answer: 'Hiện tại các Asset được tối ưu tốt nhất cho Unity. Tuy nhiên, chúng tôi cung cấp file FBX và Textures chuẩn PBR để bạn dễ dàng sử dụng trên Unreal Engine hoặc Blender.'
+    question: 'Can I use these assets for commercial projects?',
+    answer: 'Absolutely. Once purchased, you have a lifetime license for both personal and commercial use.'
   },
   {
-    question: 'Tôi sẽ nhận bản cập nhật như thế nào?',
-    answer: 'Mọi bản cập nhật sẽ được thông báo qua Email. Bạn chỉ cần vào hệ thống tải lại bản mới nhất mà không tốn thêm bất kỳ chi phí nào.'
+    question: 'Can I use these assets for commercial projects?',
+    answer: 'Absolutely. Once purchased, you have a lifetime license for both personal and commercial use.'
   }
 ]
 

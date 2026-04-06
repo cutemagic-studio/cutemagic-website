@@ -53,9 +53,9 @@ import BaseButton from '../base/BaseButton.vue'
 
 // Dữ liệu lộ trình sản xuất
 const roadmap = [
-    { month: 'Tháng 5, 2026', title: 'Cyberpunk City Kit', status: 'In Progress', desc: 'Bộ asset bối cảnh thành phố tương lai với hơn 100+ model.' },
-    { month: 'Tháng 6, 2026', title: 'Stylized Nature Pack', status: 'Planned', desc: 'Hệ thống cây cối và môi trường phong cách hoạt hình tối ưu cho Mobile.' },
-    { month: 'Tháng 7, 2026', title: 'Ultimate FX Bundle', status: 'Planned', desc: 'Tổng hợp các hiệu ứng kỹ xảo (VFX) cho chiến đấu.' }
+    { month: 'May 2026', title: 'Pack name', status: 'In Progress', desc: '_' },
+    { month: 'June 2026', title: 'Pack name', status: 'Planned', desc: '_' },
+    { month: 'July 2026', title: 'Pack name', status: 'Planned', desc: '_' }
 ]
 
 const handleVote = (id) => {

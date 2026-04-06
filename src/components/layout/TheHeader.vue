@@ -6,17 +6,20 @@
             : 'bg-transparent py-6'
     ]">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="#hero-section">
+                <div class="flex items-center gap-2 group cursor-pointer">
 
-            <div class="flex items-center gap-2 group cursor-pointer">
-                <div
-                    class="w-12 h-9 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black shadow-lg shadow-blue-200 group-hover:rotate-12 transition-transform">
-                    CMC
+                    <div
+                        class="w-12 h-10 overflow-hidden bg-white rounded-lg flex items-center justify-center text-white font-black shadow-lg shadow-blue-200 group-hover:rotate-12 transition-transform">
+                        <img :src="logoUrl" alt="CuteMagic Logo"
+                            class="h-16 w-auto rounded-xl transition-transform group-hover:scale-105" />
+                    </div>
+                    <div
+                        class="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tighter">
+                        Cute<span class="text-gray-900">Magic</span>
+                    </div>
                 </div>
-                <div
-                    class="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tighter">
-                    Cute<span class="text-gray-900">Magic</span>
-                </div>
-            </div>
+            </a>
 
             <nav class="hidden md:flex space-x-10 font-bold">
                 <a href="#why-choose-us" :class="[isScrolled ? 'text-gray-700' : 'text-gray-800']"
@@ -54,10 +57,10 @@
                     Explore Store
                 </button>
 
-                <router-link to="/cutemagic-admin"
+                <!-- <router-link to="/cutemagic-admin"
                     class="inline-block mt-4 text-[10px] text-slate-200 hover:text-blue-400 transition-colors">
                     Admin
-                </router-link>
+                </router-link> -->
             </div>
         </div>
     </header>
@@ -65,6 +68,8 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+
+import logoUrl from '../../assets/logo.webp'
 
 const isScrolled = ref(false)
 
@@ -78,7 +83,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 // Hàm tiện ích để mở link Store
 const goToStore = () => {
-    window.open('LINK_STORE_CUA_BAN', '_blank')
+    // window.open('LINK_STORE_CUA_BAN', '_blank') 
 }
 </script>
 

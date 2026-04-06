@@ -55,27 +55,54 @@
 
 let defaultImageSource = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400";
 
+// const collections = [
+//   {
+//     title: 'New Releases',
+//     items: [
+//       { name: 'Spin Park', price: '52.000 đ', tag: 'Launch Edition', image: defaultImageSource },
+//       { name: 'Synthwave Burnout', price: '18.600 đ', oldPrice: '31.000 đ', discount: '-40%', image: defaultImageSource },
+//       // ... thêm data
+//     ]
+//   },
+//   {
+//     title: 'Top Rated',
+//     items: [
+//       { name: 'Jurassic World Evolution 3', price: '980.000 đ', image: defaultImageSource },
+//       { name: 'Fallout 2', price: '56.250 đ', discount: '-75%', image: defaultImageSource },
+//     ]
+//   },
+//   {
+//     title: 'Coming Soon',
+//     items: [
+//       { name: 'Fortune Seller', date: '06/04/26', image: defaultImageSource },
+//       { name: 'Legends of Elumia', date: '08/04/26', image: defaultImageSource },
+//     ]
+//   }
+// ]
+
+import bannerUrl from '../../assets/banner.webp'
+
 const collections = [
   {
     title: 'New Releases',
     items: [
-      { name: 'Spin Park', price: '52.000 đ', tag: 'Launch Edition', image: defaultImageSource },
-      { name: 'Synthwave Burnout', price: '18.600 đ', oldPrice: '31.000 đ', discount: '-40%', image: defaultImageSource },
+      { name: 'Pack name', price: '_ $', tag: 'Launch Edition', image: bannerUrl },
+      { name: 'Pack name', price: '_ $', oldPrice: '_ $', discount: '-40%', image: bannerUrl },
       // ... thêm data
     ]
   },
   {
     title: 'Top Rated',
     items: [
-      { name: 'Jurassic World Evolution 3', price: '980.000 đ', image: defaultImageSource },
-      { name: 'Fallout 2', price: '56.250 đ', discount: '-75%', image: defaultImageSource },
+      { name: 'Pack name', price: '_ $', image: bannerUrl },
+      { name: 'Pack name', price: '_ $', discount: '-75%', image: bannerUrl },
     ]
   },
   {
     title: 'Coming Soon',
     items: [
-      { name: 'Fortune Seller', date: '06/04/26', image: defaultImageSource },
-      { name: 'Legends of Elumia', date: '08/04/26', image: defaultImageSource },
+      { name: 'Pack name', date: '20/05/26', image: bannerUrl },
+      { name: 'Pack name', date: '10/05/26', image: bannerUrl },
     ]
   }
 ]

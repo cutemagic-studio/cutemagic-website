@@ -4,6 +4,8 @@ import BaseButton from '../base/BaseButton.vue'
 // Bạn có thể thay đổi link ảnh Shop của bạn tại đây
 const shopImage = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1000"
 
+import bannerUrl from '../../assets/banner.webp'
+
 const scrollToWhy = () => {
   const element = document.getElementById('why-choose-us');
   if (element) {
@@ -90,7 +92,7 @@ const scrollToWhy = () => {
 
             <div class="aspect-[4/3] bg-gray-50 overflow-hidden relative">
               <img 
-                :src="shopImage" 
+                :src="bannerUrl" 
                 alt="Store Interface Preview"
                 class="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-110"
               />

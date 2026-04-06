@@ -1,8 +1,8 @@
 <script setup>
 const specs = [
-  { label: 'Phiên bản', value: '2.0.4', icon: '📦', color: 'bg-blue-600' },
-  { label: 'Textures', value: '4K PBR', icon: '🖼️', color: 'bg-emerald-500' },
-  { label: 'LODs', value: '4 Cấp độ', icon: '📉', color: 'bg-amber-500' },
+  { label: '_', value: '_', icon: '🖼️', color: 'bg-blue-600' },
+  { label: '_', value: '_', icon: '🖼️', color: 'bg-emerald-500' },
+  { label: '_', value: '_', icon: '🖼️', color: 'bg-amber-500' },
 //   { label: 'Rigging', value: 'Humanoid', icon: '🦴', color: 'bg-rose-500' },
 //   { label: 'Dung lượng', value: '1.2 GB', icon: '💾', color: 'bg-violet-600' }
 ]
@@ -26,11 +26,11 @@ const specs = [
 
         <div class="group p-10 lg:p-14 rounded-3xl bg-white border border-slate-100 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 flex flex-col justify-center">
           <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-8 group-hover:scale-110 transition-transform">
-            📐
+            🖼️
           </div>
-          <h4 class="text-2xl font-black text-slate-900 mb-4 tracking-tight">Standard Polycount</h4>
+          <h4 class="text-2xl font-black text-slate-900 mb-4 tracking-tight">_</h4>
           <p class="text-slate-500 leading-relaxed text-sm lg:text-base">
-            Trung bình 25k Tris mỗi mô hình, đảm bảo độ chi tiết cực cao mà vẫn giữ được hiệu năng mượt mà.
+            _
           </p>
         </div>
       </div>

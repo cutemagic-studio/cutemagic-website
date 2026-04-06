@@ -5,6 +5,7 @@
         type === 'free' ? 'bg-blue-100 text-blue-700 border border-blue-200' : '',
         type === 'hot' ? 'bg-red-100 text-red-700 border border-red-200' : '',
         type === 'pro' ? 'bg-amber-100 text-amber-700 border border-amber-200' : '',
+        type === 'coming_soon' ? 'bg-gray-400 text-white border border-grey-200' : '',
     ]">
         {{ label }}
     </span>
@@ -16,7 +17,7 @@ defineProps({
     type: {
         type: String,
         default: 'new',
-        validator: (value) => ['new', 'free', 'hot', 'pro'].includes(value)
+        validator: (value) => ['new', 'free', 'hot', 'pro', 'coming_soon'].includes(value)
     }
 })
 </script>

@@ -37,8 +37,8 @@
 
 <script setup>
 const reviews = [
-    { name: 'Alex Rivera', role: 'Game Developer', text: 'Asset tuyệt vời! Code rất sạch và dễ tùy biến. Tiết kiệm cho tôi hàng tuần làm việc.', stars: 5 },
-    { name: 'Sarah Chen', role: 'Technical Artist', text: 'Texture 4K cực kỳ chi tiết, tối ưu hóa rất tốt cho mobile. Rất đáng đồng tiền bát gạo.', stars: 5 },
-    { name: 'Marcus Todd', role: 'Indie Studio Owner', text: 'Hỗ trợ kỹ thuật rất nhanh và nhiệt tình. Sẽ còn ủng hộ các sản phẩm tiếp theo.', stars: 5 }
+    { name: 'Alex Rivera', role: 'Game Developer', text: "The low-poly models are incredibly well-optimized. My game's frame rate stayed rock-solid even on older mobile devices. Truly production-ready!", stars: 5 },
+    { name: 'Sarah Chen', role: 'Technical Artist', text: "Well-organized naming conventions and clean folder structure. Makes asset management a breeze.", stars: 5 },
+    { name: 'Marcus Todd', role: 'Indie Studio Owner', text: "Clean assets, production-ready, and easy to customize. Saved me dozens of hours on environment blocking.", stars: 5 }
 ]
 </script>
