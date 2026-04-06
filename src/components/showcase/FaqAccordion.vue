@@ -3,8 +3,8 @@ import { ref } from 'vue'
 
 const faqs = [
   {
-    question: 'Tôi có thể sử dụng Asset cho dự án thương mại không?',
-    answer: 'Hoàn toàn được. Sau khi mua, bạn có toàn quyền sử dụng Asset trong các dự án cá nhân hoặc thương mại mà không giới hạn số lượng sản phẩm.'
+    question: 'Can I use these assets for commercial projects?',
+    answer: 'Absolutely. Once purchased, you have a lifetime license for both personal and commercial use.'
   },
   {
     question: 'Asset có hỗ trợ các Engine khác như Unreal không?',
@@ -32,11 +32,11 @@ const toggleFaq = (index) => {
         <div class="md:sticky md:top-32 transition-all duration-500">
           <div class="bg-slate-900 rounded-3xl p-10 lg:p-14 text-white shadow-xl relative overflow-hidden">
             <h3 class="text-3xl lg:text-5xl font-black leading-tight tracking-tighter mb-6 relative z-10">
-              Giải đáp <br class="hidden lg:block" /> thắc mắc
+              Frequently Asked Questions
             </h3>
             <div class="h-1.5 w-12 bg-blue-500 mb-8 relative z-10"></div>
             <p class="text-slate-400 text-sm lg:text-base font-medium leading-relaxed relative z-10">
-              Chúng tôi luôn sẵn sàng hỗ trợ để bạn có trải nghiệm tốt nhất với bộ Asset chuyên nghiệp.
+              Need help? Our team is here to ensure you have the best experience with our assets.
             </p>
             
             <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>

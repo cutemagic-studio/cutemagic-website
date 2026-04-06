@@ -6,7 +6,7 @@
                 <div
                     class="bg-slate-900 rounded-3xl p-10 lg:p-14 text-white flex flex-col justify-center shadow-xl">
                     <h3 class="text-3xl lg:text-5xl font-black leading-tight tracking-tighter mb-6">
-                        Bộ sưu tập Asset
+                        AssetGallery
                     </h3>
                     <div class="h-1 w-12 bg-blue-500 mb-6"></div>
                     <p class="text-slate-400 text-sm lg:text-base font-medium leading-relaxed">
@@ -14,23 +14,6 @@
                         dự án của bạn.
                     </p>
                 </div>
-                <!-- 
-                <div class="bg-slate-900 rounded-[2rem] p-8 md:p-14 text-white shadow-xl">
-                    <h3 class="text-3xl lg:text-5xl font-black leading-tight tracking-tighter mb-6">
-                        Bộ sưu tập Asset
-                    </h3>
-                    <div class="h-1.5 w-12 bg-blue-500 mb-8"></div>
-                    <p class="text-slate-400 text-sm md:text-base font-medium leading-relaxed max-w-2xl">
-                        Khám phá thư viện tài nguyên đa dạng, được thiết kế tỉ mỉ cho mọi nhu cầu
-                        dự án của bạn.
-                    </p> -->
-                <!-- </div> -->
-
-                <!-- <div class="max-w-xl bg-blue-500">
-                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Bộ sưu tập Asset</h2>
-                    <p class="text-gray-600">Khám phá thư viện tài nguyên đa dạng, được thiết kế tỉ mỉ cho mọi nhu cầu
-                        dự án của bạn.</p>
-                </div> -->
 
                 <div class="flex bg-white p-1 rounded-xl shadow-sm border border-gray-200">
                     <button v-for="cat in categories" :key="cat" @click="selectedCategory = cat" :class="[
@@ -59,9 +42,9 @@
                         <span class="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">{{ asset.category
                             }}</span>
                         <h3 class="text-white text-xl font-bold">{{ asset.title }}</h3>
-                        <button
+                        <button @click="goToDetail(asset.id)"
                             class="mt-4 w-full py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm hover:bg-blue-50 transition-colors">
-                            Xem chi tiết
+                            View Details
                         </button>
                     </div>
                 </div>
@@ -71,9 +54,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import BaseBadge from '../base/BaseBadge.vue' // Import Badge component
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router' // Import router
+import BaseBadge from '../base/BaseBadge.vue'
 
+const router = useRouter() // Khởi tạo router
 const selectedCategory = ref('All')
 const categories = ['All', 'UI Kit', '3D Model', 'Templates']
 
@@ -123,4 +108,15 @@ const assets = [
         img: 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=400'
     },
 ]
+
+// Logic lọc sản phẩm theo category
+const filteredAssets = computed(() => {
+  if (selectedCategory.value === 'All') return assets
+  return assets.filter(a => a.category === selectedCategory.value)
+})
+
+// Hàm chuyển hướng sang trang chi tiết
+const goToDetail = (id) => {
+  router.push({ name: 'AssetDetail', params: { id: id } })
+}
 </script>

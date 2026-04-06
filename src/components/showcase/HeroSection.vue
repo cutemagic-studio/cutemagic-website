@@ -3,6 +3,14 @@ import BaseButton from '../base/BaseButton.vue'
 
 // Bạn có thể thay đổi link ảnh Shop của bạn tại đây
 const shopImage = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1000"
+
+const scrollToWhy = () => {
+  const element = document.getElementById('why-choose-us');
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
 </script>
 
 <template>
@@ -27,26 +35,26 @@ const shopImage = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?
           </div>
 
           <h1 class="text-4xl lg:text-6xl xl:text-7xl font-black text-gray-900 leading-[1.1] tracking-tight">
-            Xây dựng thế giới <br />
+            Elevate <br />
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-              Chuyên nghiệp hơn
+              Your Game World.
             </span>
           </h1>
 
           <p class="text-base lg:text-lg text-gray-500 max-w-lg mx-auto md:mx-0 leading-relaxed font-medium">
-            Khám phá gian hàng tài nguyên 3D & UI chất lượng cao. 
-            Được tối ưu hóa hoàn hảo cho hiệu suất dự án và khả năng tùy biến không giới hạn.
+            Explore our curated collection of professional 3D assets and UI kits. Production-ready, zero-AI, and built for excellence.
           </p>
 
           <div class="flex flex-col sm:flex-row items-center gap-4 pt-2">
             <BaseButton 
-              label="Ghé thăm gian hàng" 
+              label="Explore Store" 
               variant="primary" 
               size="lg" 
               class="w-full sm:w-auto shadow-2xl shadow-blue-300/50 scale-105" 
             />
             <BaseButton 
-              label="Tìm hiểu thêm" 
+            @click="scrollToWhy"
+              label="Read More" 
               variant="outline" 
               size="lg" 
               class="w-full sm:w-auto" 
@@ -58,7 +66,7 @@ const shopImage = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?
               <div v-for="i in 3" :key="i" class="w-9 h-9 rounded-full border-2 border-white bg-gray-200 shadow-sm"></div>
             </div>
             <p class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-              Được tin dùng bởi <span class="text-blue-600">2,000+</span> Developers
+              Trusted by <span class="text-blue-600">2,000+</span> Developers worldwide.
             </p>
           </div>
         </div>

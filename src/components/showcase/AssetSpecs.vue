@@ -16,11 +16,11 @@ const specs = [
         
         <div class="bg-slate-900 rounded-3xl p-10 lg:p-14 text-white flex flex-col justify-center shadow-xl">
           <h3 class="text-3xl lg:text-5xl font-black leading-tight tracking-tighter mb-6">
-            Thông số <br class="hidden lg:block" /> kỹ thuật
+            Technical Specs
           </h3>
           <div class="h-1 w-12 bg-blue-500 mb-6"></div>
           <p class="text-slate-400 text-sm lg:text-base font-medium leading-relaxed">
-            Được tối ưu hóa hoàn toàn cho hiệu suất Mobile và PC. Sẵn sàng để đưa vào dự án của bạn ngay lập tức.
+            Fully optimized for Mobile and PC performance. Production-ready for immediate integration.
           </p>
         </div>
 
@@ -28,7 +28,7 @@ const specs = [
           <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-8 group-hover:scale-110 transition-transform">
             📐
           </div>
-          <h4 class="text-2xl font-black text-slate-900 mb-4 tracking-tight">Polycount Chuẩn</h4>
+          <h4 class="text-2xl font-black text-slate-900 mb-4 tracking-tight">Standard Polycount</h4>
           <p class="text-slate-500 leading-relaxed text-sm lg:text-base">
             Trung bình 25k Tris mỗi mô hình, đảm bảo độ chi tiết cực cao mà vẫn giữ được hiệu năng mượt mà.
           </p>

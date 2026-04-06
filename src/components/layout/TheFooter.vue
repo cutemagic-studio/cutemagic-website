@@ -9,16 +9,16 @@
       </div>
 
       <div>
-        <h4 class="text-white font-semibold mb-4">Liên kết</h4>
+        <h4 class="text-white font-semibold mb-4">Quick Links</h4>
         <ul class="space-y-2 text-sm">
-          <li><a href="#" class="hover:text-white transition">Về chúng tôi</a></li>
-          <li><a href="#" class="hover:text-white transition">Tài liệu hướng dẫn</a></li>
-          <li><a href="#" class="hover:text-white transition">Chính sách bảo mật</a></li>
+          <li><a href="#" class="hover:text-white transition">About Us</a></li>
+          <li><a href="#" class="hover:text-white transition">Documentation</a></li>
+          <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
         </ul>
       </div>
 
       <div>
-        <h4 class="text-white font-semibold mb-4">Kết nối</h4>
+        <h4 class="text-white font-semibold mb-4">Connect with us</h4>
         <div class="flex space-x-4">
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">FB</a>
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">X</a>

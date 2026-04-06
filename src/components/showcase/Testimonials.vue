@@ -4,12 +4,11 @@
             <!-- <h2 class="text-3xl font-bold text-center mb-16 text-gray-900">Khách hàng nói gì về chúng tôi?</h2> -->
             <div class="bg-slate-900 rounded-3xl p-10 lg:p-14 text-white flex flex-col justify-center shadow-xl mb-6">
                 <h3 class="text-3xl lg:text-5xl font-black leading-tight tracking-tighter mb-6">
-                    Khách hàng nói gì về chúng tôi?
+                    What Developers Are Saying
                 </h3>
                 <div class="h-1 w-12 bg-blue-500 mb-6"></div>
                 <p class="text-slate-400 text-sm lg:text-base font-medium leading-relaxed">
-                    Được tối ưu hóa hoàn toàn cho hiệu suất Mobile và PC. Sẵn sàng để đưa vào dự án của bạn ngay lập
-                    tức.
+                    Trusted by creators worldwide for seamless integration and top-tier optimization.
                 </p>
             </div>
 

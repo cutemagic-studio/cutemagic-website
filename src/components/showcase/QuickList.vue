@@ -38,7 +38,7 @@
                     {{ item.price }}
                   </span>
                   <span v-if="item.date" class="text-xs text-slate-500 italic">
-                    Có sẵn vào {{ item.date }}
+                    Available on {{ item.date }}
                   </span>
                 </div>
               </div>
@@ -57,22 +57,22 @@ let defaultImageSource = "https://images.unsplash.com/photo-1460925895917-afdab8
 
 const collections = [
   {
-    title: 'Mới phát hành',
+    title: 'New Releases',
     items: [
-      { name: 'Spin Park', price: '52.000 đ', tag: 'Chạy lần đầu', image: defaultImageSource },
+      { name: 'Spin Park', price: '52.000 đ', tag: 'Launch Edition', image: defaultImageSource },
       { name: 'Synthwave Burnout', price: '18.600 đ', oldPrice: '31.000 đ', discount: '-40%', image: defaultImageSource },
       // ... thêm data
     ]
   },
   {
-    title: 'Đánh giá cao nhất',
+    title: 'Top Rated',
     items: [
       { name: 'Jurassic World Evolution 3', price: '980.000 đ', image: defaultImageSource },
       { name: 'Fallout 2', price: '56.250 đ', discount: '-75%', image: defaultImageSource },
     ]
   },
   {
-    title: 'Sắp ra mắt',
+    title: 'Coming Soon',
     items: [
       { name: 'Fortune Seller', date: '06/04/26', image: defaultImageSource },
       { name: 'Legends of Elumia', date: '08/04/26', image: defaultImageSource },
