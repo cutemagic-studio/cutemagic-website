@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 
 import HomeView from '../views/HomeView.vue'
 
@@ -34,8 +34,9 @@ const routes = [
 ]
 
 const router = createRouter({
-    // Base này giúp khi bạn deploy lên GitHub Pages hoặc thư mục con nó không bị lỗi
-    history: createWebHistory('/cutemagic-website/'), 
+    // Base này giúp khi bạn deploy lên GitHub Pages hoặc thư mục con nó không bị lỗi /// createWebHashHistory
+    // history: createWebHistory('/cutemagic-website/'),
+    history: createWebHashHistory('/cutemagic-website/'),
     routes
 })
 
