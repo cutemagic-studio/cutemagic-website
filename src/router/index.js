@@ -6,6 +6,8 @@ import AssetDetail from '../components/showcase/asset_gallery/AssetDetail.vue'
 
 import AdminLayout from '../views/admin/AdminLayout.vue'
 
+import ExtensionLayout from '../views/extension/ExtensionLayout.vue'
+
 const routes = [
     {
         path: '/', // Chỉ cần '/' vì đã có base ở dưới rồi
@@ -17,6 +19,12 @@ const routes = [
         name: 'admin',
         component: AdminLayout
     },
+    {
+        path: '/cutemagic-extension',
+        name: 'extension',
+        component: ExtensionLayout
+    },
+
     { 
         path: '/asset/:id', 
         name: 'AssetDetail',
