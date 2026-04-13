@@ -1,7 +1,7 @@
 <template>
   <div class="h-screen flex bg-[#0b0e14] font-sans text-slate-300 overflow-hidden">
     
-    <aside class="w-64 bg-[#11141b] border-r border-slate-800 p-6 flex flex-col h-full shrink-0 z-20">
+    <!-- <aside class="w-64 bg-[#11141b] border-r border-slate-800 p-6 flex flex-col h-full shrink-0 z-20">
       
       <div class="mb-10 px-2">
         <div class="flex items-center gap-2 mb-1">
@@ -52,10 +52,11 @@
           </div>
         </div>
       </div>
-    </aside>
+    </aside> -->
 
     <main class="flex-1 h-full overflow-y-auto custom-scrollbar bg-[#0b0e14]">
-      <div class="max-w-[1400px] mx-auto p-6 md:p-10 lg:p-12 min-h-full">
+      <!-- <div class="max-w-[1400px] mx-auto p-6 md:p-10 lg:p-12 min-h-full"> -->
+        <div class="w-full mx-auto min-h-full">
         
         <transition name="fade-slide" mode="out-in">
           <component :is="activeTab.component" />

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 
 import HomeView from '../views/HomeView.vue'
+import HomeView_2 from '../views/HomeView_2.vue'
 
 import AssetDetail from '../components/showcase/asset_gallery/AssetDetail.vue'
 
@@ -12,8 +13,10 @@ const routes = [
     {
         path: '/', // Chỉ cần '/' vì đã có base ở dưới rồi
         name: 'home',
-        component: HomeView
+        // component: HomeView
+        component: HomeView_2
     },
+    
     {
         path: '/cutemagic-admin', // Khi chạy nó sẽ là /cutemagic-website/cutemagic-admin
         name: 'admin',
@@ -35,8 +38,8 @@ const routes = [
 
 const router = createRouter({
     // Base này giúp khi bạn deploy lên GitHub Pages hoặc thư mục con nó không bị lỗi /// createWebHashHistory
-    // history: createWebHistory('/cutemagic-website/'),
-    history: createWebHashHistory('/cutemagic-website/'),
+    history: createWebHistory('/cutemagic-website/'),
+    // history: createWebHashHistory('/cutemagic-website/'),
     routes
 })
 

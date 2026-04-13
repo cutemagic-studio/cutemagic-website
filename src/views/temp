@@ -1,0 +1,215 @@
+<template>
+    <div class="min-h-screen font-sans antialiased bg-[#0b0e14]">
+
+        <div v-if="isDashboardMode" class="h-screen flex overflow-hidden">
+            <aside class="w-64 bg-[#11141b] border-r border-slate-800 p-6 flex flex-col h-full shrink-0 z-20">
+                <div class="mb-10 px-2">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/20"></div>
+                        <h1 class="text-lg font-black text-white tracking-tight">CuteMagic</h1>
+                    </div>
+                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">Control Panel</p>
+                </div>
+
+                <nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+                    <div class="mt-8 border-t border-slate-800 pt-6">
+                        <div class="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-4 mb-4">Color
+                            Library</div>
+
+                        <div class="space-y-2 px-2">
+                            <div v-for="(group, gIdx) in colorGroups" :key="gIdx"
+                                class="border border-slate-800 rounded-xl overflow-hidden bg-[#161a23]/50 transition-all">
+                                <button @click="toggleGroup(gIdx)"
+                                    class="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-800 transition-colors">
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase">{{ group.name }}</span>
+                                    <span class="text-[10px] transition-transform duration-300"
+                                        :class="openGroup === gIdx ? 'rotate-180' : ''">▼</span>
+                                </button>
+
+                                <div v-show="openGroup === gIdx" class="p-2 grid grid-cols-4 gap-1.5 bg-[#0b0e14]">
+                                    <button v-for="color in group.colors" :key="color" @click="quickSelectColor(color)"
+                                        class="h-7 rounded-md border border-white/5 hover:scale-110 transition-all shadow-sm active:ring-2 active:ring-blue-500"
+                                        :style="{ backgroundColor: color }" :title="color"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </aside>
+
+            <main class="flex-1 h-full overflow-y-auto bg-[#0b0e14] custom-scrollbar">
+                <!-- <div class="max-w-[1400px] mx-auto p-6 md:p-10">w-full -->
+                <div class="w-full mx-auto">
+                    <transition name="fade-slide" mode="out-in">
+                        <component :is="activeDashboardTab.component" />
+                    </transition>
+                </div>
+            </main>
+        </div>
+
+        <div v-else class="flex flex-col text-gray-900 bg-white">
+            <TheHeader @open-admin="isDashboardMode = true" />
+
+            <main class="flex-grow">
+                <HeroSection id="hero-section" />
+                <WhyChooseUs id="why-choose-us" />
+                <AssetGallery id="gallery" />
+                <AssetSpecs id="specs" />
+                <ProductionRoadmap id="roadmap" />
+                <AssetVote />
+                <QuickList />
+                <Testimonials />
+                <FaqAccordion />
+                <ContactSection />
+            </main>
+
+            <TheFooter />
+            <TrafficTracker />
+
+            <!-- <button 
+        @click="openHelper"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition-transform z-50"
+      >
+        🧰
+      </button> -->
+
+            <button @click="openHelper"
+                class="group fixed bottom-6 right-6 h-14 w-14 hover:w-44 cursor-pointer bg-[#1C1C1C] text-white rounded-full shadow-[0_10px_40px_rgba(37,99,235,0.4)] flex items-center justify-center transition-all duration-500 ease-in-out z-50 overflow-hidden border border-white/20">
+                <div
+                    class="flex items-center justify-center w-14 h-14 shrink-0 transition-transform duration-500 group-hover:scale-110">
+                    <span class="text-2xl">🧰</span>
+                </div>
+
+                <span
+                    class="max-w-0 overflow-hidden whitespace-nowrap text-sm font-bold tracking-wide opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:pr-6 transition-all duration-500 ease-in-out">
+                    TOOLS
+                </span>
+            </button>
+        </div>
+
+    </div>
+</template>
+
+<script setup>
+import { ref, markRaw, onMounted } from 'vue'
+
+// --- TRANG LANDING PAGE COMPONENTS ---
+import TheHeader from '../components/layout/TheHeader.vue'
+import TheFooter from '../components/layout/TheFooter.vue'
+import HeroSection from '../components/showcase/HeroSection.vue'
+import WhyChooseUs from '../components/showcase/WhyChooseUs.vue'
+import AssetGallery from '../components/showcase/AssetGallery.vue'
+import AssetSpecs from '../components/showcase/AssetSpecs.vue'
+import ProductionRoadmap from '../components/showcase/ProductionRoadmap.vue'
+import AssetVote from '../components/showcase/AssetVote.vue'
+import QuickList from '../components/showcase/QuickList.vue'
+import FaqAccordion from '../components/showcase/FaqAccordion.vue'
+import Testimonials from '../components/showcase/Testimonials.vue'
+import ContactSection from '../components/showcase/ContactSection.vue'
+import TrafficTracker from '../components/utils/TrafficTracker.vue'
+
+// --- ADMIN/TOOLS COMPONENTS ---
+import PaletteColorGenerator from '../views/extension/ExtensionLayout.vue'
+// Giả sử bạn đã có component này, nếu chưa hãy tạo file trắng để tránh lỗi
+import CuteMagicExtension from '../views/extension/CuteMagicExtension.vue'
+
+// Trạng thái hiển thị: false = Landing Page, true = Dashboard
+const isDashboardMode = ref(false)
+
+const dashboardTabs = [
+    {
+        id: 'PaletteColorGenerator',
+        name: 'Palette Color',
+        icon: '🎨',
+        component: markRaw(PaletteColorGenerator)
+    },
+    {
+        id: 'CuteMagicExtension',
+        name: 'Helper Extension',
+        icon: '🚀',
+        component: markRaw(CuteMagicExtension)
+    }
+]
+
+const activeDashboardTab = ref(dashboardTabs[0])
+
+// Hàm mở nhanh trang Helper từ Landing Page
+const openHelper = () => {
+    activeDashboardTab.value = dashboardTabs.find(t => t.id === 'CuteMagicExtension')
+    isDashboardMode.value = true
+}
+
+
+
+// ... các import hiện tại ...
+
+// --- DỮ LIỆU BẢNG MÀU MINI ---
+const colorGroups = [
+    {
+        name: "Nhóm 1: Crimson",
+        colors: ["#8B0016", "#B2001F", "#C50023", "#DF0029", "#E54646", "#EE7C6B", "#F5A89A", "#FCDAD5"]
+    },
+    {
+        name: "Nhóm 2: Rosewood",
+        colors: ["#8E1E20", "#B6292B", "#C82E31", "#E33539", "#EB7153", "#F19373", "#F6B297", "#FCD9C4"]
+    },
+    {
+        name: "Nhóm 3: Ochre",
+        colors: ["#945305", "#BD6B09", "#D0770B", "#E8850E", "#F0A64D", "#F5C082", "#F9D6A9", "#FDECD2"]
+    }
+]
+
+const openGroup = ref(0) // Mặc định mở nhóm đầu tiên
+
+const toggleGroup = (index) => {
+    openGroup.value = openGroup.value === index ? -1 : index
+}
+
+/**
+ * Logic quan trọng: Đồng bộ màu về Palette Generator
+ * Nếu đang ở tab khác, nó sẽ tự động chuyển về tab Palette và áp dụng màu
+ */
+const quickSelectColor = (color) => {
+    // 1. Đảm bảo đang ở Tab Palette Color Generator
+    activeDashboardTab.value = dashboardTabs.find(t => t.id === 'PaletteColorGenerator')
+
+    // 2. Phát một event global hoặc sử dụng Provide/Inject nếu bạn muốn update sâu vào component con
+    // Ở mức đơn giản nhất, chúng ta lưu vào localStorage hoặc dùng một mitt/bus để component con nghe thấy
+    localStorage.setItem('chromaforge_pending_color', color)
+
+    // Tạo một Custom Event để component PaletteColorGenerator nhận diện ngay lập tức
+    window.dispatchEvent(new CustomEvent('color-preset-selected', { detail: color }))
+}
+</script>
+
+<style scoped>
+/* Scrollbar cho Dashboard */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+/* Chuyển cảnh mượt */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+    transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+</style>
