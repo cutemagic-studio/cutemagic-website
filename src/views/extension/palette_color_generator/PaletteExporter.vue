@@ -7,62 +7,91 @@
           Color Texture Exporter
         </h2>
         <p class="text-sm text-gray-400">
-          2048x2048 | 16x10 grid | Safe export
+          2048x2048 | 16x14 grid | Safe export
         </p>
       </div>
 
       <div class="flex items-center gap-3">
+        <!-- Zoom -->
         <input type="range" min="0.2" max="1" step="0.01" v-model="previewScale" />
 
-        <button @click="clearGrid" class="px-4 py-2 font-bold rounded-lg bg-red-500 text-white">
+        <!-- CLEAR -->
+        <button
+          @click="clearGrid"
+          class="px-4 py-2 font-bold rounded-lg bg-red-500 text-white"
+        >
           🧹 CLEAR
         </button>
 
-        <button @click="exportToPNG" class="px-4 py-2 font-bold rounded-lg" style="background:#14b8a6;color:#0b0e14;">
+        <!-- EXPORT -->
+        <button
+          @click="exportToPNG"
+          class="px-4 py-2 font-bold rounded-lg"
+          style="background:#14b8a6;color:#0b0e14;"
+        >
           💾 EXPORT 2K
         </button>
       </div>
     </div>
 
     <!-- VIEWPORT -->
-    <div class="flex justify-center overflow-auto border rounded-xl" style="background:#0b0e14; border-color:#1e293b;">
-      <!-- SCALE WRAPPER (chỉ preview) -->
+    <div
+      class="flex justify-center overflow-auto border rounded-xl"
+      style="background:#0b0e14; border-color:#1e293b;"
+    >
+      <!-- SCALE WRAPPER -->
       <div class="origin-top" :style="{ transform: `scale(${previewScale})` }">
+        
         <!-- EXPORT REGION -->
-        <div ref="exportRegion" class="grid grid-cols-16" :style="exportGridStyle">
-          <div v-for="(color, index) in colorGrid" :key="index" @click="handleCellClick(index)"
-            class="w-full h-full flex items-center justify-center cursor-pointer" :style="cellStyle(color)">
-            <span class="data-html2canvas-ignore"
-              style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;">
+        <div
+          ref="exportRegion"
+          class="grid"
+          :style="exportGridStyle"
+        >
+          <div
+            v-for="(color, index) in colorGrid"
+            :key="index"
+            @click="handleCellClick(index)"
+            class="w-full h-full flex items-center justify-center cursor-pointer"
+            :style="cellStyle(color)"
+          >
+            <span
+              class="data-html2canvas-ignore"
+              style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;"
+            >
               {{ index + 1 }}
             </span>
           </div>
         </div>
+
       </div>
     </div>
   </div>
-</template> 
+</template>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import html2canvas from "html2canvas";
-import { useTextureStore } from "../.././../stores/textureStore";
+import { useTextureStore } from "../../../stores/textureStore";
 
 const store = useTextureStore();
+
+const COLS = 16;
+const ROWS = 14;
 
 const defaultColor = "#1A1A1A";
 const exportRegion = ref(null);
 
-// 🧠 dùng trực tiếp từ Pinia
+// Pinia state
 const colorGrid = computed(() => store.grid);
 
-// Zoom
+// Zoom preview
 const previewScale = ref(1);
 
 // Grid gap
 const gridGap = ref(2);
 
-// Auto fit
+// Auto fit preview
 const updateScale = () => {
   const padding = 40;
   const availableWidth = window.innerWidth - padding;
@@ -78,12 +107,15 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", updateScale);
 });
 
-// Grid style
+// Grid style (QUAN TRỌNG)
 const exportGridStyle = computed(() => ({
   width: "1024px",
   height: "1024px",
   background: "#000",
-  gap: `${gridGap.value}px`
+  gap: `${gridGap.value}px`,
+  gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+  gridTemplateRows: `repeat(${ROWS}, 1fr)`,
+  imageRendering: "pixelated"
 }));
 
 // Cell style
@@ -120,14 +152,14 @@ const handleCellClick = async (index) => {
   }
 };
 
-// 🧹 CLEAR GRID
+// CLEAR
 const clearGrid = () => {
   if (confirm("Xóa toàn bộ bảng màu?")) {
     store.clearGrid();
   }
 };
 
-// EXPORT
+// EXPORT (luôn 2048x2048)
 const exportToPNG = async () => {
   if (!exportRegion.value) return;
 
@@ -143,7 +175,7 @@ const exportToPNG = async () => {
 
     const canvas = await html2canvas(clone, {
       backgroundColor: "#000",
-      scale: 2,
+      scale: 2, // 👈 1024 * 2 = 2048
       useCORS: true,
       allowTaint: true,
       logging: false,
@@ -170,8 +202,9 @@ const exportToPNG = async () => {
     link.href = canvas.toDataURL("image/png");
     link.click();
 
+    console.log("✅ Export 2048x2048 thành công");
   } catch (err) {
-    console.error("Export lỗi:", err);
+    console.error("❌ Export lỗi:", err);
   }
 };
 </script>

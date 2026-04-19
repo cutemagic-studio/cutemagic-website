@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useTextureStore = defineStore('texture', {
   state: () => ({
-    grid: JSON.parse(localStorage.getItem('texture_grid') || 'null') || Array(160).fill(null)
+    grid: JSON.parse(localStorage.getItem('texture_grid') || 'null') || Array(224).fill(null)
   }),
 
   actions: {
@@ -12,8 +12,8 @@ export const useTextureStore = defineStore('texture', {
     },
 
     clearGrid() {
-      this.grid = Array(160).fill(null);
-      this.save();
+      this.grid = Array(224).fill(null);
+      this.save(); 
     },
 
     save() {

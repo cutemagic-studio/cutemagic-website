@@ -7,48 +7,33 @@
           Color Texture Exporter
         </h2>
         <p class="text-sm text-gray-400">
-          2048x2048 | 16x10 grid | Safe export
+          2048x2048 | 16x14 grid
         </p>
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- Zoom -->
         <input type="range" min="0.2" max="1" step="0.01" v-model="previewScale" />
 
-        <button
-          @click="exportToPNG"
-          class="px-4 py-2 font-bold rounded-lg"
-          style="background:#14b8a6;color:#0b0e14;"
-        >
+        <button @click="clearGrid" class="px-4 py-2 font-bold rounded-lg bg-red-500 text-white">
+          🧹 CLEAR
+        </button>
+
+        <button @click="exportToPNG" class="px-4 py-2 font-bold rounded-lg" style="background:#14b8a6;color:#0b0e14;">
           💾 EXPORT 2K
         </button>
       </div>
     </div>
 
     <!-- VIEWPORT -->
-    <div
-      class="flex justify-center overflow-auto border rounded-xl"
-      style="background:#0b0e14; border-color:#1e293b;"
-    >
+    <div class="flex justify-center overflow-auto border rounded-xl" style="background:#0b0e14; border-color:#1e293b;">
       <!-- SCALE WRAPPER (chỉ preview) -->
       <div class="origin-top" :style="{ transform: `scale(${previewScale})` }">
         <!-- EXPORT REGION -->
-        <div
-          ref="exportRegion"
-          class="grid grid-cols-16"
-          :style="exportGridStyle"
-        >
-          <div
-            v-for="(color, index) in colorGrid"
-            :key="index"
-            @click="handleCellClick(index)"
-            class="w-full h-full flex items-center justify-center cursor-pointer"
-            :style="cellStyle(color)"
-          >
-            <span
-              class="data-html2canvas-ignore"
-              style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;"
-            >
+        <div ref="exportRegion" class="grid grid-cols-16" :style="exportGridStyle">
+          <div v-for="(color, index) in colorGrid" :key="index" @click="handleCellClick(index)"
+            class="w-full h-full flex items-center justify-center cursor-pointer" :style="cellStyle(color)">
+            <span class="data-html2canvas-ignore"
+              style="font-size:10px;color:rgba(255,255,255,0.2);font-family:monospace;">
               {{ index + 1 }}
             </span>
           </div>
@@ -56,56 +41,47 @@
       </div>
     </div>
   </div>
-</template>
+</template> 
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import html2canvas from "html2canvas";
+import { useTextureStore } from "../.././../stores/textureStore";
+
+const store = useTextureStore();
 
 const defaultColor = "#1A1A1A";
-const colorGrid = ref(Array(160).fill(null));
 const exportRegion = ref(null);
 
-// Zoom preview
+// 🧠 dùng trực tiếp từ Pinia
+const colorGrid = computed(() => store.grid);
+
+// Zoom
 const previewScale = ref(1);
 
-// Grid line (UI 1px → export 2px)
-// Grid line (UI 2px → export 4px)
+// Grid gap
 const gridGap = ref(2);
 
 // Auto fit
 const updateScale = () => {
   const padding = 40;
   const availableWidth = window.innerWidth - padding;
-  previewScale.value = Math.min(1, availableWidth / 2048);
+  previewScale.value = Math.min(1, availableWidth / 1024);
 };
 
 onMounted(() => {
   updateScale();
   window.addEventListener("resize", updateScale);
-
-  const saved = localStorage.getItem("cute_magic_texture_grid");
-  if (saved) {
-    try { colorGrid.value = JSON.parse(saved); } catch {}
-  }
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateScale);
 });
 
-const save = () => {
-  localStorage.setItem("cute_magic_texture_grid", JSON.stringify(colorGrid.value));
-};
-
 // Grid style
 const exportGridStyle = computed(() => ({
-//   width: "2048px", // ok
-//   height: "2048px", // ok
-
   width: "1024px",
   height: "1024px",
-
   background: "#000",
   gap: `${gridGap.value}px`
 }));
@@ -115,14 +91,13 @@ const cellStyle = (color) => ({
   backgroundColor: color || defaultColor
 });
 
-// Click
+// Click cell
 const handleCellClick = async (index) => {
   const current = colorGrid.value[index];
 
   if (current) {
     if (confirm(`Xóa màu ${current}?`)) {
-      colorGrid.value[index] = null;
-      save();
+      store.setCell(index, null);
     }
     return;
   }
@@ -136,8 +111,7 @@ const handleCellClick = async (index) => {
         ? text.trim()
         : "#" + text.trim();
 
-      colorGrid.value[index] = hex.toUpperCase();
-      save();
+      store.setCell(index, hex.toUpperCase());
     } else {
       alert("Clipboard không phải HEX hợp lệ!");
     }
@@ -146,12 +120,18 @@ const handleCellClick = async (index) => {
   }
 };
 
-// 🚀 EXPORT 4096x4096 (KHÔNG bị ảnh hưởng bởi zoom)
+// 🧹 CLEAR GRID
+const clearGrid = () => {
+  if (confirm("Xóa toàn bộ bảng màu?")) {
+    store.clearGrid();
+  }
+};
+
+// EXPORT
 const exportToPNG = async () => {
   if (!exportRegion.value) return;
 
   try {
-    // clone để loại bỏ transform preview
     const clone = exportRegion.value.cloneNode(true);
 
     clone.style.transform = "none";
@@ -186,13 +166,12 @@ const exportToPNG = async () => {
     document.body.removeChild(clone);
 
     const link = document.createElement("a");
-    link.download = `ColorMap_4096_${Date.now()}.png`;
+    link.download = `ColorMap_2048_${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
 
-    console.log("✅ Export 4096x4096 (16x10) thành công");
   } catch (err) {
-    console.error("❌ Export lỗi:", err);
+    console.error("Export lỗi:", err);
   }
 };
 </script>
