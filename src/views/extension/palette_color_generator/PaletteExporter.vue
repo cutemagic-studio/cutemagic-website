@@ -22,10 +22,10 @@
         </button>
 
         <!-- EXPORT -->
-        <button @click="generateSamplerateSamplePalette" class="px-4 py-2 font-bold rounded-lg"
+        <!-- <button @click="generateSamplerateSamplePalette" class="px-4 py-2 font-bold rounded-lg"
           style="background:#14b8a6;color:#0b0e14;">
           Generate
-        </button>
+        </button> -->
 
         <!-- EXPORT -->
         <button @click="exportToPNG" class="px-4 py-2 font-bold rounded-lg" style="background:#14b8a6;color:#0b0e14;">
