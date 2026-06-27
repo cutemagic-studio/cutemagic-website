@@ -37,7 +37,7 @@
 
     <!-- VIEWPORT -->
     <!-- <div class="flex justify-center overflow-auto border rounded-xl" style="background:#0b0e14; border-color:#1e293b;"> -->
-      <div class="flex justify-center overflow-auto">
+    <div class="flex justify-center overflow-auto">
       <!-- SCALE WRAPPER -->
       <div class="origin-top" :style="{ transform: `scale(${previewScale})` }">
 
@@ -100,8 +100,10 @@ onBeforeUnmount(() => {
 
 // Grid style (QUAN TRỌNG)
 const exportGridStyle = computed(() => ({
-  width: "1024px",
-  height: "1024px",
+  // width: "1024px",
+  // height: "1024px",
+  width: "2048px",
+  height: "2048px",
   background: "#000",
   // gap: `${gridGap.value}px`,
   gap: `0px`,
@@ -119,7 +121,7 @@ const cellStyle = (data) => {
   // Nếu data là mảng, tạo CSS gradient
   if (Array.isArray(data) && data.length >= 2) {
     return {
-      background: `linear-gradient(180deg, ${data[0]}, ${data[1]})`,
+      background: `linear-gradient(180deg, ${data[0]}, ${data[1]}) no-repeat`,
 
       //
       backgroundSize: '100% 100%',
@@ -129,7 +131,7 @@ const cellStyle = (data) => {
     };
   } else if (Array.isArray(data) && data.length == 1) {
     return {
-      background: `linear-gradient(180deg, ${data[0]}, ${data[0]})`,
+      background: `linear-gradient(180deg, ${data[0]}, ${data[0]}) no-repeat`,
 
       //
       backgroundSize: '100% 100%',
@@ -247,10 +249,12 @@ const exportToPNG = async () => {
 
     const canvas = await html2canvas(clone, {
       backgroundColor: "#000",
-      scale: 4, // 👈 1024 * 2 = 2048
+      scale: 2, // 👈 1024 * 2 = 2048
       useCORS: true,
       allowTaint: true,
       logging: false,
+
+      // foreignObjectRendering: true,
 
       ignoreElements: (el) =>
         el.classList.contains("data-html2canvas-ignore"),
@@ -263,6 +267,10 @@ const exportToPNG = async () => {
           if (style.backgroundColor.includes("oklch")) el.style.backgroundColor = "#000";
           if (style.borderColor.includes("oklch")) el.style.borderColor = "#333";
           if (style.boxShadow.includes("oklch")) el.style.boxShadow = "none";
+
+          if (style.backgroundRepeat.includes("oklch")) el.style.backgroundRepeat = "no-repeat";
+          if (style.border.includes("oklch")) el.style.border = "none";
+
         });
       }
     });
@@ -336,27 +344,27 @@ const colorGridFinal = [
   ["#F3F2F3"], ["#C0BFC1"], ["#A0A0A0"], ["#85838E"], ["#72719D"], ["#646464"], ["#756487"], ["#7A80AB"], ["#A0C1E3"], ["#B8E5EC"],
   ["#F4FBF9"], ["#FEFCF6"], ["#F3E0D3"], ["#DDAAAA"], ["#A992AA"], ["#8E7A98"], ["#C2887F"], ["#D6BEB1"], ["#FCFAF7"], ["#F3EEE2"],
   ["#E8EDCE"], ["#C5D8B9"], ["#95B5B4"], ["#889787"], ["#BBAD88"], ["#E1E1D0"], ["#FDF8F7"], ["#F6E6F4"], ["#9D95A3"], ["#ffffff"],
-  
+
   ["#DFDEDF"], ["#ACAAAD"], ["#8C8C8C"], ["#706F7A"], ["#5F5D87"], ["#505050"], ["#605370"], ["#62699A"], ["#81ACDA"], ["#98D9E3"],
   ["#D6F0E9"], ["#FCF8E9"], ["#EACAB3"], ["#D18C8E"], ["#977B98"], ["#7A6683"], ["#B56F63"], ["#C8A796"], ["#FAF6F2"], ["#ECE3D0"],
   ["#DAE2B0"], ["#AFC99E"], ["#7DA4A3"], ["#738472"], ["#AC9C6E"], ["#D1D1B7"], ["#FDF8F7"], ["#EBC9E7"], ["#897F90"], ["#587175"],
-  
+
   ["#CAC9CB"], ["#979699"], ["#777777"], ["#5D5B64"], ["#4E4D6F"], ["#3B3B3B"], ["#4C4158"], ["#525881"], ["#6198D0"], ["#78CEDB"],
   ["#B8E6D9"], ["#F7ECC5"], ["#E1B393"], ["#C66F71"], ["#836784"], ["#64546C"], ["#A2594D"], ["#BA917C"], ["#F0E0D4"], ["#E5D8BD"],
   ["#CDD792"], ["#9ABB84"], ["#669291"], ["#606E5F"], ["#998858"], ["#C1C19E"], ["#F7E3E1"], ["#E0ABD9"], ["#756B7B"], ["#3d4b52"],
-  
+
   ["#B6B4B7"], ["#838185"], ["#636363"], ["#49484F"], ["#3D3C57"], ["#272727"], ["#383041"], ["#424768"], ["#4283C7"], ["#58C2D2"],
   ["#9ADBC9"], ["#F2E0A1"], ["#D89D73"], ["#BA5254"], ["#6C556D"], ["#4F4255"], ["#864A40"], ["#AC7A61"], ["#E5CBB6"], ["#DECDAB"],
   ["#BFCC74"], ["#84AC6A"], ["#557A79"], ["#4D584C"], ["#7F7149"], ["#B1B185"], ["#EEC6C1"], ["#D58DCC"], ["#605865"], ["#263239"],
-  
+
   ["#A29FA3"], ["#6F6D70"], ["#4F4F4F"], ["#35353A"], ["#2C2B3F"], ["#131313"], ["#241F2A"], ["#32364F"], ["#336FAD"], ["#38B6C9"],
   ["#7CD0B9"], ["#EDD47D"], ["#CF8753"], ["#A24143"], ["#554356"], ["#3A303E"], ["#6A3B33"], ["#96664F"], ["#DAB698"], ["#D6C299"],
   ["#B1C156"], ["#6F9855"], ["#446261"], ["#3A4239"], ["#655A3A"], ["#A1A16C"], ["#E5A9A1"], ["#CA6FBF"], ["#4B454F"], ["#1c222c"],
-  
+
   ["#8D8A8F"], ["#5A595C"], ["#3A3A3A"], ["#222124"], ["#1B1B27"], ["#0E0E0E"], ["#100D12"], ["#222536"], ["#2A5B8D"], ["#2E9AAA"],
   ["#5EC6A9"], ["#E8C859"], ["#C37136"], ["#853537"], ["#3F313F"], ["#241E27"], ["#4F2C26"], ["#7B5441"], ["#D0A07A"], ["#CFB787"],
   ["#9EAE40"], ["#5C7E46"], ["#334A49"], ["#272C26"], ["#4B432B"], ["#8B8B59"], ["#DC8B81"], ["#BF51B1"], ["#373239"], ["#181b24"],
-  
+
   ["#79767B"], ["#464547"], ["#262626"], ["#0E0E0F"], ["#0F0E1F"], ["#050505"], ["#050406"], ["#12141D"], ["#21466E"], ["#257D8A"],
   ["#42B998"], ["#E3BD35"], ["#A35E2D"], ["#682A2B"], ["#281F28"], ["#1A151C"], ["#331C18"], ["#604232"], ["#C58B5C"], ["#C8AC75"],
   ["#839135"], ["#496438"], ["#233231"], ["#141613"], ["#312C1C"], ["#727249"], ["#D46E61"], ["#A93E9C"], ["#221F24"], ["#12121a"],
@@ -408,7 +416,7 @@ const colorGridFinal = [
   ///
   /// Gradients 
   ///
-  
+
   ["#f7bcbd", "#fdf8f9"], ["#789f49", "#bee474"], ["#b48149", "#d3a45d"], ["#e9eba7", "#c0d568"], ["#e4eda8", "#8cd9f9"],
   ["#65a1fa", "#8bd6fc"], ["#fdf3bd", "#fce99d"], ["#f2693c", "#fdf5bb"], ["#f4693b", "#cb4826"], ["#78c2dc", "#5ad4a1"],
   ["#fbb962", "#d85536"], ["#c8ee86", "#5ad7a3"], ["#3f501e", "#5e7d40"], ["#cdd8b4", "#e7eca2"], ["#f9d889", "#c75b34"],
@@ -416,7 +424,7 @@ const colorGridFinal = [
   ["#afa9e2", "#7967cc"], ["#b3aae2", "#eeb491"], ["#edb86f", "#f3b298"], ["#c1caf8", "#9fb0f4"], ["#50b2e7", "#c3c7f9"],
   ["#50b2e7", "#3594c0"], ["#cf8e79", "#ca5582"], ["#70a3ec", "#379ece"], ["#a683e4", "#cb5985"], ["#2c1b4c", "#5c4276"],
 
-  
+
   ["#5a6bf9", "#55fcfd"], ["#a94899", "#fb5588"], ["#686c9a", "#6f6a96"], ["#88eba2", "#5c958f"], ["#64e0fb", "#61c7fc"],
   ["#7cb498", "#cabc6b"], ["#dbc4d6", "#b5ebfe"], ["#fdfbb1", "#feffd9"], ["#538fa7", "#64b1c3"], ["#89e0bc", "#4661a6"],
   ["#f1b94f", "#fcfe95"], ["#9e8c85", "#faceae"], ["#a582ab", "#83698d"], ["#74aebc", "#fc85aa"], ["#4e465c", "#bc4245"],
@@ -424,7 +432,7 @@ const colorGridFinal = [
   ["#97936d", "#939671"], ["#e486c8", "#905b5f"], ["#ec7969", "#ed8d63"], ["#ae7b94", "#707ac2"], ["#c8dbc8", "#fbc6ba"],
   ["#b2b0f6", "#dddcf8"], ["#a66c58", "#bf7564"], ["#d788ab", "#a1844a"], ["#5e85e3", "#9b96f4"], ["#8a989a", "#b4d5f0"],
 
-  
+
   ["#276157", "#246a52"], ["#2c3c3b", "#72a0b5"], ["#767251", "#9cbe76"], ["#328eaa", "#4ebefd"], ["#7b00a0", "#4b0f65"],
   ["#49166a", "#68c6fd"], ["#68127f", "#a70067"], ["#1f2251", "#0a0926"], ["#6631ab", "#4d4099"], ["#5e3963", "#6b265d"],
   ["#233b76", "#4269c8"], ["#944f2b", "#fad662"], ["#35150e", "#732d1e"], ["#783e32", "#504139"], ["#29363a", "#5a9ea5"],
@@ -432,7 +440,7 @@ const colorGridFinal = [
   ["#a04432", "#ec784e"], ["#3d9927", "#356420"], ["#3b6623", "#e9936e"], ["#347822", "#299f56"], ["#4e4722", "#23240b"],
   ["#7aa944", "#929d42"], ["#446140", "#2d653e"], ["#6f5325", "#be924b"], ["#386d8e", "#617cf0"], ["#122c32", "#2c5f69"],
 
-  
+
   ["#c3a270", "#93aa6c"], ["#523f4e", "#393239"], ["#2a2c20", "#796a59"], ["#ccf0b7", "#acec91"], ["#d7a928", "#c09227"],
   ["#b9713f", "#b26435"], ["#70721d", "#f4e542"], ["#502e13", "#b05e20"], ["#f6dd35", "#331e2c"], ["#fad9af", "#ba815d"],
   ["#fae23d", "#1d4990"], ["#874d29", "#fbd88c"], ["#90753f", "#8d7843"], ["#576f5a", "#bdb99a"], ["#ba3834", "#392619"],
@@ -440,7 +448,7 @@ const colorGridFinal = [
   ["#22202b", "#5d6c78"], ["#dcb6e6", "#bd87e3"], ["#304bc8", "#2f4bb3"], ["#4d82b1", "#3c78ab"], ["#142a4d", "#2657a6"],
   ["#2c25e6", "#1f3323"], ["#b1d1f6", "#6392b3"], ["#2d25e8", "#834a20"], ["#315a82", "#96b1f2"], ["#465b8b", "#455a8a"],
 
-  
+
   ["#68584e", "#423a34"], ["#e6d6e3", "#5a6875"], ["#e77f51", "#f9bb8a"], ["#a99c62", "#afa463"], ["#c4d0d0", "#f4feff"],
   ["#becbc2", "#e8c8bd"], ["#2c794c", "#98fce3"], ["#a5c0a1", "#eac781"], ["#8c8a64", "#b6c364"], ["#1e5826", "#5d8d5a"],
   ["#69fece", "#fafde9"], ["#caf645", "#2b5013"], ["#f9be53", "#f68139"], ["#fcfed3", "#91b7a6"], ["#3b6d8a", "#3e6e89"],
