@@ -9,7 +9,7 @@
     <TrafficTracker />
     <UserTracker />
 
-    <div class="fixed bottom-0 left-0 w-full z-50 p-4 pointer-events-none">
+    <!-- <div class="fixed bottom-0 left-0 w-full z-50 p-4 pointer-events-none">
       <div
         class="max-w-xl mx-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-3 rounded-2xl shadow-2xl pointer-events-auto">
         <div class="flex items-center justify-between gap-4">
@@ -34,7 +34,7 @@
 
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
