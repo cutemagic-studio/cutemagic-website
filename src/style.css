@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* Ép Tailwind chuyển sang Dark Mode dựa vào class thay vì hệ điều hành */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
+

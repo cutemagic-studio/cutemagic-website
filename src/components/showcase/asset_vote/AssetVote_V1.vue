@@ -100,11 +100,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { db, auth } from '../../firebase' // Nhớ export auth từ firebase.js nhé
+import { db, auth } from '../../../firebase' // Nhớ export auth từ firebase.js nhé
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'firebase/auth'
 import { ref as dbRef, onValue, update, increment, push, serverTimestamp } from 'firebase/database'
 
-import { useVisitorStore } from '../../stores/visitor'
+import { useVisitorStore } from '../../../stores/visitor'
 const visitorStore = useVisitorStore() // Khởi tạo store
 
 const voteItems = ref([])

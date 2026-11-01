@@ -23,7 +23,9 @@
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">FB</a>
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">X</a>
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">GH</a>
-        </div>
+        
+          <a href="https://cutemagic-studio.github.io/cutemagic-website/favicon.svg" download>Tải Favicon</a>
+        </div> 
       </div>
     </div>
 

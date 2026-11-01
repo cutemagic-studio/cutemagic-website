@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "init-tw": "tailwindcss init -p"
   },
   "dependencies": {
     "daisyui": "^5.5.19",
@@ -17,13 +18,13 @@
     "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.2.2",
     "@vitejs/plugin-vue": "^6.0.5",
-    "autoprefixer": "^10.4.27",
-    "postcss": "^8.5.8",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
     "sass-embedded": "^1.99.0",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.3.3",
     "vite": "^8.0.1"
   }
 }

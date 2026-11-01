@@ -62,7 +62,7 @@ onMounted(async () => {
         })
     }
 
-    console.log(visitorStore.user);
+    // console.log(visitorStore.user);
 })
 </script>
 
