@@ -9,9 +9,9 @@ import AdminLayout from '../views/admin/AdminLayout.vue'
 
 import ExtensionLayout from '../views/extension/ExtensionLayout.vue'
 
-import AssetLibraryView from '../views/pages/assets/AssetLibraryView.vue'
+import AssetLibraryView from '../views/pages/assets/asset_gallery/AssetLibraryView.vue'
 
-import AssetDetailView from '../views/pages/assets/AssetDetailView.vue'
+import AssetDetailView from '../views/pages/assets/asset_detail/AssetDetailView.vue'
 
 import DonateView from '../views/pages/donate/DonateView.vue'
 
@@ -41,7 +41,7 @@ const routes = [
     },
 
     { 
-        path: '/asset/:id', 
+        path: '/assets/:id', 
         name: 'AssetDetailView',
         component: AssetDetailView,
         props: true // Cho phép truyền ID vào component như một prop

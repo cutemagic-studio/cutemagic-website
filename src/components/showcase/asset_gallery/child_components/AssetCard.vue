@@ -1,13 +1,13 @@
 <template>
-  <!-- Main Card Container -->
-  <div class="flex flex-col bg-[#1e1e1e] rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 w-full border-2">
+  <div class="flex flex-col bg-white dark:bg-[#1e1e1e] rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 w-full border-2 border-slate-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-gray-500 group/card">
+  <!-- <div class="flex flex-col bg-[#1e1e1e] rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 w-full border-2"> -->
     
     <!-- Image Area (Relative for absolute positioning inside) -->
     <div class="relative group cursor-pointer">
       
       <!-- Thumbnail Image -->
       <div class="aspect-[4/3] w-full overflow-hidden">
-        <img :src="asset.image" :alt="asset.title" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <img :src="asset?.media?.cover" :alt="asset.title" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
       </div>
       
       <!-- Top Right Badge (Model Count) -->
@@ -23,7 +23,7 @@
         </div> -->
         <!-- Solid yellow bar -->
         <div class="bg-[#ffe600] text-black text-center font-black uppercase tracking-widest py-1.5 text-[10px] sm:text-xs">
-          {{ asset.category }}
+          {{ asset.categoryId }}
         </div>
       </div>
 
@@ -93,7 +93,7 @@ const props = defineProps({
       price: '49.99'
     })
   }
-})
+}) 
 
 // Các hàm xử lý sự kiện
 const goToDetail = () => {

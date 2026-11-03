@@ -86,7 +86,7 @@
             <main class="flex-grow">
                 <HeroSection id="hero-section" />
                 <WhyChooseUs id="why-choose-us" />
-                <AssetGallery id="gallery" />
+                <AssetLibrary id="gallery" />
                 <AssetSpecs id="specs" />
                 <ProductionRoadmap id="roadmap" />
                 <AssetVote />
@@ -124,7 +124,7 @@ import TheHeader from '../components/layout/TheHeader.vue'
 import TheFooter from '../components/layout/TheFooter.vue'
 import HeroSection from '../components/showcase/HeroSection.vue'
 import WhyChooseUs from '../components/showcase/WhyChooseUs.vue'
-import AssetGallery from '../components/showcase/asset_gallery/AssetGallery.vue'
+import AssetLibrary from '../components/showcase/asset_gallery/AssetLibrary.vue'
 import AssetSpecs from '../components/showcase/asset_spec/AssetSpecs.vue'
 import ProductionRoadmap from '../components/showcase/ProductionRoadmap.vue'
 import AssetVote from '../components/showcase/asset_vote/AssetVote.vue'

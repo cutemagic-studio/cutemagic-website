@@ -8,3 +8,53 @@ html {
   scroll-behavior: smooth;
 }
 
+@layer components {
+
+  /* =======================================================
+       1. KÍNH MỜ CAO CẤP (GLASSMORPHISM PANEL)
+       ======================================================= */
+  .premium-glass-panel {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+
+  /* Lợi thế của Global CSS là bạn dùng thẳng .dark thay vì :global(.dark) */
+  :global(.dark) .premium-glass-panel {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05),
+      0 8px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  /* =======================================================
+       2. ĐƯỜNG VIỀN NÉT ĐỨT (BLUEPRINT DASHED BOUNDARY)
+       ======================================================= */
+  .dashed-boundary {
+    /* Đặt relative để lớp viền bám theo kích thước của khối này */
+    position: relative;
+  }
+
+  .dashed-boundary::before {
+    content: '';
+    position: absolute;
+    /* Đẩy viền ra ngoài khối 6px ở cả 4 cạnh để giống nét vẽ bao quanh */
+    top: -12px;
+    left: -12px;
+    right: -12px;
+    bottom: -12px;
+
+    /* Đường nét đứt màu xanh (blue-500 của Tailwind) */
+    border: 2px dashed rgba(59, 130, 246, 0.8);
+
+    /* Bo góc to hơn khối bên trong một chút để đường viền ôm mượt mà */
+    border-radius: 1.25rem;
+
+    /* Tránh việc đường viền cản trở người dùng bôi đen chữ hay click chuột */
+    pointer-events: none;
+  }
+
+  /* Tùy chỉnh màu nét đứt khi ở Dark Mode cho dịu mắt hơn */
+  :global(.dark) .dashed-boundary::before {
+    border: 2px dashed rgba(59, 130, 246, 0.5);
+  }
+}
