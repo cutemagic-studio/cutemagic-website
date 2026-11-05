@@ -53,8 +53,8 @@
             :disabled="!prevAssetId"
             class="p-2.5 rounded-xl transition-all duration-300 group"
             :class="prevAssetId 
-                ? 'bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white cursor-pointer shadow-sm' 
-                : 'bg-transparent text-gray-300 dark:text-slate-700 cursor-not-allowed'"
+                ? 'border-2 bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white cursor-pointer shadow-sm' 
+                : 'border-2 bg-transparent text-gray-300 dark:text-slate-700 cursor-not-allowed'"
             title="Previous Asset">
             <svg xmlns="http://www.w3.org/2000/svg" 
                  class="h-5 w-5 transition-transform duration-300"
@@ -66,7 +66,7 @@
 
         <!-- NÚT GRID (Về trang danh sách) -->
         <router-link to="/assets"
-            class="p-2.5 rounded-xl transition-all duration-300 cursor-pointer shadow-sm bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white"
+            class="border-2 p-2.5 rounded-xl transition-all duration-300 cursor-pointer shadow-sm bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white"
             title="Back to Grid">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -79,8 +79,8 @@
             :disabled="!nextAssetId"
             class="p-2.5 rounded-xl transition-all duration-300 group"
             :class="nextAssetId 
-                ? 'bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white cursor-pointer shadow-sm' 
-                : 'bg-transparent text-gray-300 dark:text-slate-700 cursor-not-allowed'"
+                ? 'border-2 bg-gray-100 text-gray-700 hover:bg-[#FFA500] hover:text-white dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-[#FFA500] dark:hover:text-white cursor-pointer shadow-sm' 
+                : 'border-2 bg-transparent text-gray-300 dark:text-slate-700 cursor-not-allowed'"
             title="Next Asset">
             <svg xmlns="http://www.w3.org/2000/svg" 
                  class="h-5 w-5 transition-transform duration-300"

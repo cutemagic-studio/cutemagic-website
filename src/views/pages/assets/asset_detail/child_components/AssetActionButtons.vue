@@ -66,7 +66,7 @@
                     @click="hasLink(store.key) ? openLink(asset.links[store.key]) : null"
                     class="w-full h-14 rounded-xl flex items-center justify-center gap-3 transition-all group border-2 relative overflow-hidden"
                     :class="hasLink(store.key)
-                        ? `bg-white dark:bg-[#161a23] border-slate-200 dark:border-slate-700 cursor-pointer shadow-sm hover:-translate-y-1 hover:shadow-md text-slate-700 dark:text-slate-300 ${store.hoverColor}`
+                        ? `bg-white dark:bg-[#161a23] border-[#1e1e1e] dark:border-slate-700 cursor-pointer shadow-sm hover:-translate-y-1 hover:shadow-md text-slate-700 dark:text-slate-300 ${store.hoverColor}`
                         : 'bg-slate-50 dark:bg-[#11141b] border-slate-100 dark:border-slate-800/50 opacity-40 cursor-not-allowed grayscale text-slate-400 dark:text-slate-600'"
                 >
                     <!-- SVG Icon -->
@@ -91,12 +91,15 @@
             :download-url="asset?.download?.url || ''"
             @close="isDonateModalOpen = false" 
         />
+
     </div>
 </template>
 
 <script setup>
 
 import { ref } from 'vue'
+import { computed } from 'vue'
+import { useAssetStore } from '../../../../../stores/useAssetStore.js'
 
 import DownloadDonateModal from '../../../../modals/DownloadDonateModal.vue'
 
@@ -114,6 +117,9 @@ const isDonateModalOpen = ref(false)
 const hasLink = (key) => {
     return props.asset?.links && props.asset.links[key] && props.asset.links[key].trim() !== ''
 }
+
+const assetStore = useAssetStore()
+const isLiked = computed(() => assetStore.isFavorite(props.asset?.id))
 
 // Cấu hình 6 Store kèm Icon SVG vẽ bằng path cơ bản
 const storeConfigs = [

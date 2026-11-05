@@ -1,5 +1,5 @@
 <template>
-  <section class="relative w-full min-h-screen flex items-center pt-28 pb-12 lg:pt-20">
+  <section id="HeroSection" class="relative w-full min-h-screen flex items-center pt-28 pb-12 lg:pt-20">
 
     <div class="max-w-7xl mx-auto px-6 w-full relative z-10">
       <div class="flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">

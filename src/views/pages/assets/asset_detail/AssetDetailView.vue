@@ -1,8 +1,9 @@
 <template>
 
     <div>
-        <AssetLibraryMegaMenu mode="floating" offsetTop="top-[48px]"/>
-        
+        <AssetLibraryMegaMenu mode="floating" offsetTop="top-[48px]" :is-open="activeMenu === 'asset'"
+            @toggle="toggleMenu('asset')" @close="activeMenu = null" />
+
         <div class="min-h-screen pt-0 pb-20 transition-colors duration-300 z-0">
 
             <!-- ==========================================
@@ -81,10 +82,36 @@
 
                     <!-- CỘT PHẢI: THÔNG TIN CHI TIẾT -->
                     <div class="flex flex-col pt-2 h-full">
-                        <!-- Tên Asset (Giữ nguyên text-2xl font-bold, cập nhật màu) -->
-                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
-                            {{ currentAsset?.title }}
-                        </h3>
+                        <div class="flex items-start justify-between gap-4 mb-3">
+                            <!-- Tên Asset (Giữ nguyên text-2xl font-bold, cập nhật màu) -->
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
+                                {{ currentAsset?.title }}
+                            </h3>
+
+                            <!-- Nút Trái Tim Yêu Thích -->
+                            <!-- Nút này được bo viền tròn, đổ bóng nhẹ, đổi màu hồng rực rỡ khi được bấm (isLiked) -->
+                            <button 
+                                @click="assetStore.toggleFavorite(currentAsset?.id)"
+                                :title="isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'"
+                                :class="[
+                                    'shrink-0 flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 cursor-pointer active:scale-90',
+                                    isLiked 
+                                        ? 'bg-pink-500/10 dark:bg-pink-500/20 text-[#ff005b] border-2 border-[#ff005b] shadow-[0_0_15px_rgba(255,0,91,0.2)]' 
+                                        : 'bg-white dark:bg-[#161a23] text-gray-400 hover:text-[#ff005b] border-2 border-[#1e1e1e] dark:border-white/10 hover:border-[#ff005b] shadow-sm'
+                                ]">
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    class="h-6 w-6 transition-transform duration-300" 
+                                    :class="{ 'scale-110': isLiked }"
+                                    :fill="isLiked ? 'currentColor' : 'none'" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                        
 
                         <!-- Giá tiền (Kính mờ, viền đồng bộ) -->
                         <div class="mb-6">
@@ -268,6 +295,26 @@ const currentAsset = computed(() => {
     return asset
 })
 
+const isLiked = computed(() => {
+    if (!currentAsset.value?.id) return false
+    return assetStore.isFavorite(currentAsset.value.id)
+})
+
+// ========================================================
+// MegaMenu
+// ========================================================
+const activeMenu = ref(null)
+// Hàm xử lý việc chuyển đổi giữa các menu
+const toggleMenu = (menuName) => {
+    if (activeMenu.value === menuName) {
+        // Click lại đúng nút đang mở -> Đóng nó
+        activeMenu.value = null
+    } else {
+        // Click nút khác -> Gán tên nút đó (Tự động đóng nút cũ)
+        activeMenu.value = menuName
+    }
+}
+
 // --- LOGIC HÌNH ẢNH CAROUSEL & THUMBNAIL (Dùng Data Thật) ---
 const currentImageIdx = ref(0)
 const thumbContainer = ref(null)
@@ -310,6 +357,17 @@ watch(
         isReviewsOpen.value = false
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
+)
+
+// Theo dõi mỗi khi ID trên URL thay đổi (Chạy ngay lập tức cả ở lần đầu tiên mở trang)
+watch(
+    () => route.params.id,
+    (newId) => {
+        if (newId) {
+            assetStore.recordAssetView(newId)
+        }
+    },
+    { immediate: true }
 )
 
 // --- TRẠNG THÁI CHO ACCORDION & TABS ---

@@ -1,5 +1,5 @@
 <template>
-    <section id="gallery" class="py-24 z-0">
+    <section id="AssetLibrarySection" class="py-12 z-0">
 
         <!-- VÙNG 1: HEADER (TITLE + SLIDER + TOOLBAR) -->
         <div class="max-w-7xl mx-auto px-6 mb-12 relative z-10">
@@ -111,9 +111,10 @@
                     <!-- NÚT XEM ALL GALLERY (FULL WIDTH) -->
                     <div class="w-full mt-1">
                         <button @click="goToAllAssets"
-                            class="w-full px-6 py-4 bg-white/70 dark:bg-[#161a23]/60 backdrop-blur-xl border-2 border-[#1C1C1C] dark:border-white/10 rounded-2xl font-black text-base text-slate-900 dark:text-white hover:bg-[#FFD700] hover:border-[#FFD700] hover:text-[#1C1C1C] dark:hover:bg-blue-600 dark:hover:border-blue-600 dark:hover:text-white transition-all shadow-lg shadow-slate-200/50 dark:shadow-none cursor-pointer flex items-center justify-between">
+                            :class="[theme.ui.buttonRoundedBorderBlue, 'w-full', 'px-6', 'py-4', 'rounded-2xl', 'font-black', 'text-base', 'transition-all', 'flex', 'items-center', 'justify-between']"
+                            >
                             <span>View All</span>
-                            <span class="text-xl leading-none">→</span>
+                            <span class="text-xl leading-none">➜</span>
                         </button>
                     </div>
                 </div>
@@ -281,10 +282,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAssetStore } from '../../../stores/useAssetStore.js' // Thay đường dẫn theo dự án của bạn
-import AssetCard from './child_components/AssetCard.vue'
+import { useThemeStore } from '../../../stores/useThemeStore.js'
+import AssetCard from '../../../views/pages/assets/asset_detail/child_components/AssetCard.vue'
 
 const router = useRouter()
 const assetStore = useAssetStore()
+const theme = useThemeStore()
 
 // Lấy mảng dữ liệu từ Store
 const { assets } = storeToRefs(assetStore)

@@ -1,15 +1,14 @@
 <template>
   <div @click="goToDetail"
-    class="flex flex-col bg-white dark:bg-[#1e1e1e] rounded-xl cursor-pointer overflow-hidden hover:shadow-2xl transition-all duration-300 w-full border-2 border-slate-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-gray-500 group/card">
-    <!-- <div class="flex flex-col bg-[#1e1e1e] rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 w-full border-2"> -->
+    :class="[theme.ui.assetCard]">
 
     <!-- Image Area (Relative for absolute positioning inside) -->
-    <div class="relative group">
+    <div class="relative group shrink-0">
 
       <!-- Thumbnail Image -->
       <div class="aspect-[4/3] w-full overflow-hidden">
         <img :src="asset?.media?.cover" :alt="asset.title"
-          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
       </div>
 
       <!-- Top Right Badge (Model Count) -->
@@ -20,11 +19,7 @@
 
       <!-- Bottom Overlays (Sub-title & Category) -->
       <div class="absolute bottom-0 w-full flex flex-col">
-        <!-- Semi-transparent grey bar -->
-        <!-- <div class="bg-black/60 backdrop-blur-sm text-white text-center font-bold uppercase tracking-wider py-1.5 text-xs sm:text-sm">
-          {{ asset.series }}
-        </div> -->
-        <!-- Solid yellow bar -->
+        
         <div
           class="bg-[#ffe600] text-black text-center font-black uppercase tracking-widest py-1.5 text-[10px] sm:text-xs">
           {{ asset.categoryId }}
@@ -62,15 +57,12 @@
     </div>
 
     <!-- Text Details Area -->
-    <div class="px-4 py-3 flex flex-col items-center justify-center bg-[#1e1e1e]">
-      <h3
-        class="text-white text-sm sm:text-base font-bold text-center leading-tight mb-1.5 hover:text-[#ffe600] transition-colors">
+    <div class="px-2 py-2 flex flex-col flex-1 bg-[#1e1e1e]">
+      <h3 :class="[theme.ui.assetCardTitle]">
         {{ asset.title }}
       </h3>
-      <!-- <span class="text-[#ff0055] text-lg sm:text-xl font-black">
-        ${{ asset.price }}
-      </span> -->
-      <div class="mt-auto pt-2">
+
+      <div class="mt-auto pt-2 flex justify-center w-full">
         <AssetPriceTag :asset="asset" size="sm" />
       </div>
     </div>
@@ -82,9 +74,12 @@
 import { defineProps } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { useThemeStore } from '../../../../../stores/useThemeStore.js'
+
 import AssetPriceTag from './AssetPriceTag.vue'
 
 const router = useRouter()
+const theme = useThemeStore()
 
 // Định nghĩa Props nhận từ component cha (AssetGallery)
 const props = defineProps({

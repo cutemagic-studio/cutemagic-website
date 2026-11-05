@@ -5,20 +5,22 @@
         <TheHeader />
 
         <main class="flex-grow">
-            <HeroSection id="hero-section" />
-            <WhyChooseUs id="why-choose-us" />
-            <AssetLibrary id="asset-library" />
-            <AssetSpecs id="specs" />
-            <ProductionRoadmap id="roadmap" />
-            <AssetVote />
-            <QuickList />
-            <Testimonials />
-            <FaqAccordion />
+            <HeroSection/>
+            <RecentlyViewedSection/>
+            <WhyChooseUsSection/>
+            <AssetLibrarySection/>
+            <AssetSpecSection/>
+            <ProductionRoadmapSection/>
+            <QuickListSection/>
+            <TestimonialSection />
+            <FaqAccordionSection />
+
+            <FavoriteAssetsSection />
             <ContactSection />
         </main>
 
         <TheFooter />
-        <!-- <TrafficTracker /> -->
+        <!-- <TrafficTracker /> --> 
 
     </div>
 </template>
@@ -28,14 +30,18 @@
 import TheHeader from '../components/layout/TheHeader.vue'
 import TheFooter from '../components/layout/TheFooter.vue'
 import HeroSection from '../components/showcase/HeroSection.vue'
-import WhyChooseUs from '../components/showcase/WhyChooseUs.vue'
-import AssetLibrary from '../components/showcase/asset_gallery/AssetLibrary.vue'
-import AssetSpecs from '../components/showcase/asset_spec/AssetSpecs.vue'
-import ProductionRoadmap from '../components/showcase/ProductionRoadmap.vue'
-import AssetVote from '../components/showcase/asset_vote/AssetVote.vue'
-import QuickList from '../components/showcase/QuickList.vue'
-import FaqAccordion from '../components/showcase/FaqAccordion.vue'
-import Testimonials from '../components/showcase/Testimonials.vue'
+import WhyChooseUsSection from '../components/showcase/WhyChooseUsSection.vue'
+import AssetLibrarySection from '../components/showcase/asset_gallery/AssetLibrarySection.vue'
+import AssetSpecSection from '../components/showcase/asset_spec/AssetSpecSection.vue'
+import ProductionRoadmapSection from '../components/showcase/asset_road_map/ProductionRoadmapSection.vue'
+
+import QuickListSection from '../components/showcase/QuickListSection.vue'
+import FaqAccordionSection from '../components/showcase/FaqAccordionSection.vue'
+import TestimonialSection from '../components/showcase/TestimonialSection.vue'
 import ContactSection from '../components/showcase/ContactSection.vue'
 import TrafficTracker from '../components/utils/TrafficTracker.vue'
+
+import RecentlyViewedSection from '../components/showcase/asset_recently_viewed/RecentlyViewedSection.vue'
+import FavoriteAssetsSection from '../components/showcase/favourite_asset/FavoriteAssetsSection.vue'
+
 </script>

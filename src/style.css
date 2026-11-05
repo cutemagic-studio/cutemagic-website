@@ -58,3 +58,36 @@ html {
     border: 2px dashed rgba(59, 130, 246, 0.5);
   }
 }
+
+/* Thêm đoạn này vào file CSS toàn cục của bạn (src/assets/main.css) */
+@layer utilities {
+  .bg-cmg-btn { background-color: var(--cmg-btn-bg); }
+  .text-cmg-btn-text { color: var(--cmg-btn-text); }
+  .border-cmg-btn-border { border-color: var(--cmg-btn-border); }
+  
+  .hover\:bg-cmg-btn-hover:hover { background-color: var(--cmg-btn-hover-bg); }
+  .hover\:text-cmg-btn-hover-text:hover { color: var(--cmg-btn-hover-text); }
+  .hover\:border-cmg-btn-hover-border:hover { border-color: var(--cmg-btn-hover-border); }
+
+  .bg-cmg-btn-active { background-color: var(--cmg-btn-active-bg); }
+  .text-cmg-btn-active-text { color: var(--cmg-btn-active-text); }
+  .border-cmg-btn-active-border { border-color: var(--cmg-btn-active-border); }
+
+  .rounded-cmg-btn { border-radius: var(--cmg-radius-btn); }
+
+  /* NHÓM MÀU NỀN CƠ BẢN */
+  .bg-cmg-body { background-color: var(--cmg-bg-body); }
+  .bg-cmg-surface { background-color: var(--cmg-bg-surface); }
+  .bg-cmg-card { background-color: var(--cmg-bg-card); }
+  .bg-cmg-elevated { background-color: var(--cmg-bg-elevated); }
+
+  /* NHÓM MÀU CHỮ */
+  .text-cmg-title { color: var(--cmg-text-title); }
+  .text-cmg-label { color: var(--cmg-text-label); }
+  .text-cmg-content { color: var(--cmg-text-content); }
+  .text-cmg-muted { color: var(--cmg-text-muted); }
+
+  /* NHÓM VIỀN CHUNG */
+  .border-cmg-subtle { border-color: var(--cmg-border-subtle); }
+  .border-cmg-strong { border-color: var(--cmg-border-strong); }
+}

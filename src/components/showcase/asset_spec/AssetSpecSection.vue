@@ -1,6 +1,6 @@
 <template>
 
-  <section id="specs" class="py-16">
+  <section id="AssetSpecSection" class="py-12">
 
     <div class="max-w-7xl mx-auto px-6">
 
@@ -38,8 +38,7 @@
             </div>
 
             <p class="text-slate-600 dark:text-slate-400 leading-relaxed text-sm lg:text-base">
-              Tất cả các model đều được thiết kế với mesh tối ưu và shader đơn giản, đảm bảo khả năng render cực kỳ hiệu
-              quả trên đa nền tảng: Mobile, VR/AR, PC và Console.
+              All models are crafted with optimized meshes and lightweight shaders, ensuring highly efficient rendering across Mobile, VR/AR, PC, and Console.
             </p>
           </div>
 
@@ -78,19 +77,19 @@
 const specs = [
   {
     label: 'Geometry & Topology',
-    value: 'Sử dụng lưới Low-poly đã được tối ưu hóa (Production-ready). Trung bình chỉ ~1000 vertices mỗi model, đảm bảo hiệu suất tối đa.',
+    value: 'Built with clean, production-ready low-poly topology. Averaging just ~1,000 vertices per model to ensure maximum runtime performance.',
     icon: '🔺',
     color: 'bg-blue-600'
   },
   {
     label: 'Texture & Materials',
-    value: 'Dùng chung 1 Material và 1 Texture Atlas (Base Color 2048x2048 PNG) duy nhất cho toàn bộ pack, giúp giảm thiểu Draw Calls đáng kể.',
+    value: 'Shares a single Material and one unified Texture Atlas (Base Color 2048x2048 PNG) across the entire pack to drastically reduce Draw Calls.',
     icon: '🎨',
     color: 'bg-emerald-500'
   },
   {
     label: 'Render Pipeline',
-    value: 'Tương thích và hỗ trợ hoàn toàn Universal Render Pipeline (URP). Các shader và material đã được cấu hình sẵn để dùng ngay.',
+    value: 'Fully compatible with Universal Render Pipeline (URP). All shaders and materials are pre-configured and ready to use out of the box.',
     icon: '⚙️',
     color: 'bg-amber-500'
   }

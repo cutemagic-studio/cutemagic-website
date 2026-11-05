@@ -44,46 +44,50 @@
                 <!-- ==========================================
                      NÚT ASSET LIBRARY VỚI MEGA MENU (KIỂU ASSET STORE)
                      ========================================== -->
-                <AssetLibraryMegaMenu :is-scrolled="isScrolled" />
+                <!-- ==========================================
+                     [CẬP NHẬT]: TRUYỀN BIẾN activeMenu XUỐNG 2 COMPONENT CON
+                     ========================================== -->
+                <AssetLibraryMegaMenu 
+                    :is-scrolled="isScrolled" 
+                    :is-open="activeMenu === 'asset'"
+                    @toggle="toggleMenu('asset')"
+                    @close="activeMenu = null"
+                />
 
-                <a href="#specs"
-                    :class="[isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-gray-800 dark:text-gray-300']"
-                    class="hover:text-blue-600 dark:hover:text-blue-400 transition relative group/link text-sm py-2">
-                    Technical Specs
-                    <span
-                        class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 dark:bg-blue-400 transition-all group-hover/link:w-full"></span>
-                </a>
+                <MegaMenuResources 
+                    :is-scrolled="isScrolled" 
+                    :is-open="activeMenu === 'resources'"
+                    @toggle="toggleMenu('resources')"
+                    @close="activeMenu = null"
+                />
 
-                <a href="#roadmap"
-                    :class="[isScrolled ? 'text-gray-700 dark:text-gray-200' : 'text-gray-800 dark:text-gray-300']"
-                    class="hover:text-blue-600 dark:hover:text-blue-400 transition relative group/link text-sm py-2">
-                    Production Roadmap
-                    <span
-                        class="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 dark:bg-blue-400 transition-all group-hover/link:w-full"></span>
-                </a>
             </nav>
 
-            <!-- NÚT TOGGLE DARK MODE THÊM VÀO ĐÂY -->
-            <button @click="toggleTheme"
-                class="p-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 transition-colors cursor-pointer shadow-sm">
+            <div class="-my-4 flex items-center shrink-0 gap-4">
+                <!-- NÚT TOGGLE DARK MODE THÊM VÀO ĐÂY -->
+                <!-- <button @click="toggleTheme"
+                    class="p-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 transition-colors cursor-pointer shadow-sm"> -->
 
-                <!-- Icon Mặt trời (hiện khi đang ở Dark Mode) -->
-                <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                        d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18.75a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM6.166 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.06 1.06l1.59 1.591zM4.5 12a.75.75 0 01-.75.75H1.5a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM6.166 5.106a.75.75 0 00-1.06 1.06l1.59 1.591a.75.75 0 101.06-1.06l-1.59-1.591z" />
-                </svg>
+                <button @click="toggleTheme"
+                        :class="[theme.ui.buttonRoundedBorderBlue]">
 
-                <!-- Icon Mặt trăng (hiện khi đang ở Light Mode) -->
-                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-            </button>
+                    <!-- Icon Mặt trời (hiện khi đang ở Dark Mode) -->
+                    <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                            d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18.75a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75zM6.166 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.06 1.06l1.59 1.591zM4.5 12a.75.75 0 01-.75.75H1.5a.75.75 0 010-1.5h2.25a.75.75 0 01.75.75zM6.166 5.106a.75.75 0 00-1.06 1.06l1.59 1.591a.75.75 0 101.06-1.06l-1.59-1.591z" />
+                    </svg>
 
-            <div class="flex items-center gap-4">
-                <button @click="goToDonate" class="relative px-6 py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 active:scale-95 cursor-pointer
+                    <!-- Icon Mặt trăng (hiện khi đang ở Light Mode) -->
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                    </svg>
+                </button>
+
+                <div class="flex items-center gap-4">
+                    <!-- <button @click="goToDonate" class="relative px-6 py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 active:scale-95 cursor-pointer
                            /* Hiệu ứng kính mờ (Nền trong suốt + Blur) */
                            bg-blue-500/10 dark:bg-blue-500/20 
                            backdrop-blur-md 
@@ -101,9 +105,15 @@
                            hover:bg-blue-500/20 dark:hover:bg-blue-400/30
                            hover:shadow-[0_0_20px_rgba(37,99,235,0.25)] dark:hover:shadow-[0_0_25px_rgba(96,165,250,0.4)]
                            hover:-translate-y-0.5">
-                    Donate
-                </button>
+                        Donate
+                    </button> -->
+                    <button @click="goToDonate"
+                        :class="[theme.ui.buttonRoundedBorderBlue , 'py-2', 'px-6', 'font-bold']">
+                        Donate
+                        </button>
+                </div>
             </div>
+
         </div>
     </header>
 </template>
@@ -111,30 +121,49 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useThemeStore } from '../../stores/useThemeStore'
 
 import logoUrl from '../../assets/logo.webp'
 
 import { useTheme } from '../../composables/useTheme'
 
 import AssetLibraryMegaMenu from './AssetLibraryMegaMenu.vue'
+import MegaMenuResources from './MegaMenuResources.vue'
 
 const router = useRouter()
+const theme = useThemeStore()
 const { isDark, toggleTheme } = useTheme()
 
-// Thêm biến quản lý trạng thái Mega Menu
-const isMegaMenuOpen = ref(false)
+// ========================================================
+// [CẬP NHẬT]: THAY THẾ isMegaMenuOpen THÀNH activeMenu
+// ========================================================
+// Biến lưu trữ tên menu đang được mở: 'asset', 'resources', hoặc null (đóng hết)
+const activeMenu = ref(null)
+
+// Hàm xử lý việc chuyển đổi giữa các menu
+const toggleMenu = (menuName) => {
+    if (activeMenu.value === menuName) {
+        // Click lại đúng nút đang mở -> Đóng nó
+        activeMenu.value = null
+    } else {
+        // Click nút khác -> Gán tên nút đó (Tự động đóng nút cũ)
+        activeMenu.value = menuName 
+    }
+}
+
 // ========================================================
 // LOGIC KHÓA CUỘN TRANG (SCROLL LOCK) KHI MỞ MEGA MENU
 // ========================================================
-watch(isMegaMenuOpen, (isOpen) => {
-    if (isOpen) {
-        // Thêm class overflow-hidden của Tailwind vào body để khóa cuộn
-        document.body.classList.add('overflow-hidden')
-    } else {
-        // Gỡ class overflow-hidden khi đóng menu để cuộn bình thường
-        document.body.classList.remove('overflow-hidden')
-    }
-})
+// Đổi watch từ isMegaMenuOpen sang activeMenu
+// watch(activeMenu, (currentActiveMenu) => {
+//     if (currentActiveMenu !== null) {
+//         // Thêm class overflow-hidden của Tailwind vào body để khóa cuộn
+//         document.body.classList.add('overflow-hidden')
+//     } else {
+//         // Gỡ class overflow-hidden khi đóng menu để cuộn bình thường
+//         document.body.classList.remove('overflow-hidden')
+//     }
+// })
 
 const isScrolled = ref(false)
 const isHidden = ref(false) // Trạng thái ẩn/hiện header

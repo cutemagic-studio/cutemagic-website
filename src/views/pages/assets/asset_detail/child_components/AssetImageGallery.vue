@@ -42,7 +42,7 @@
             
             <!-- Nút cuộn trái -->
             <button @click="scrollThumbLeft"
-                class="absolute left-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-blue-600 dark:hover:bg-[#ff005b] text-white px-0.5 transition-all opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center cursor-pointer rounded-l-md">
+                class="absolute left-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-[#1e5aff] dark:hover:bg-[#ff005b] text-white px-0.5 transition-all opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center cursor-pointer rounded-l-md">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -57,14 +57,14 @@
                            w-[calc((100%-24px)/4)] 
                            /* Tablet/Desktop: Hiện đúng 5 tấm (Trừ đi 4 khoảng gap 8px) */
                            sm:w-[calc((100%-32px)/5)]"
-                    :class="currentIdx === index ? 'border-blue-600 dark:border-[#ff005b] opacity-100' : 'border-transparent opacity-50 hover:opacity-100'">
+                    :class="currentIdx === index ? 'border-[#1E90FF] dark:border-[#ff005b] opacity-100' : 'border-[#1e1e1e] opacity-50 hover:opacity-100'">
                     <img :src="img" class="w-full h-full object-cover">
                 </button>
             </div>
 
             <!-- Nút cuộn phải -->
             <button @click="scrollThumbRight"
-                class="absolute right-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-blue-600 dark:hover:bg-[#ff005b] text-white px-0.5 transition-all opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center cursor-pointer rounded-r-md">
+                class="absolute right-0 top-0 bottom-0 z-10 bg-black/50 hover:bg-[#1e5aff] dark:hover:bg-[#ff005b] text-white px-0.5 transition-all opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center cursor-pointer rounded-r-md">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />

@@ -26,7 +26,7 @@
         
           <a href="https://cutemagic-studio.github.io/cutemagic-website/favicon.svg" download>Tải Favicon</a>
           <!-- https://github.com/vantan-15081998/cmg_asset_drive/blob/main/test/env_123456/pack_01_test/pack_01_test.zip -->
-          <a href="https://github.com/vantan-15081998/cmg_asset_drive/blob/main/test/env_123456/pack_01_test/pack_01_test.zip" download>Tải Favicon</a>
+          <a href="https://vantan-15081998.github.io/cmg_asset_drive/test/env_123456/pack_01_test/pack_01_test.zip" download>Tải Favicon</a>
         </div> 
       </div>
     </div>

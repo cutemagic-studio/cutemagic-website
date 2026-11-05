@@ -36,11 +36,17 @@ export const characterAssets = [
         },
         shortDescription: 'A stylized goofy male character with three looks: underwear, relaxed outfit, and business suit.',
         features: ['**1 Stylized Male Character**', '**Three Looks**', '**Rigged Face**'],
-        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '12,000 Tris' }
+        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '12,000 Tris' },
+        
+        roadmap: { status: 'prev' } // Thêm cục này vào để nó chui vào cột "Tháng trước"
     }),
     new AssetModel({
         id: 2, slug: 'cute-magic-cube-animals', title: 'Cute Magic – Cube Animals',
-        categoryId: 'characters', price: 19.99, packCount: 1, modelCount: 50,
+        categoryId: 'characters', 
+
+        // price: 19.99, 
+
+        packCount: 1, modelCount: 50,
         initialReleaseDate: '2025-05-12',
         latestReleaseDate: '2026-11-01',
         media: mediaBase, badges: ['-20%'],
@@ -53,11 +59,20 @@ export const characterAssets = [
         },
         shortDescription: '50 adorable cube-shaped animal characters with custom URP mobile shaders.',
         features: ['**50 Cute Animals**', '**Single-texture atlas**'],
-        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '1,000 Tris' }
+        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '1,000 Tris' },
+
+        price: 25.00,
+        originalPrice: 50.00,
+        discount: 50,
+        discountEndsIn: "5 days",
+
+        roadmap: { status: 'prev' } // Thêm cục này vào để nó chui vào cột "Tháng trước"
     }),
     new AssetModel({
         id: 3, slug: 'fantasy-rpg-knights', title: 'Fantasy RPG Knights',
-        categoryId: 'characters', price: 35.00, packCount: 2, modelCount: 8,
+        categoryId: 'characters', 
+        // price: 35.00,
+         packCount: 2, modelCount: 8,
         initialReleaseDate: '2025-05-12',
         latestReleaseDate: '2026-11-01',
         media: mediaBase,
@@ -70,13 +85,20 @@ export const characterAssets = [
         },
         shortDescription: 'Modular knight characters with interchangeable armors and weapons for RPG games.',
         features: ['**Modular Armors**', '**Epic Weapons**', '**Mixamo Ready**'],
-        techSpecs: { rigged: 'Yes', animated: 'No', polycount: '15,000 Tris' }
+        techSpecs: { rigged: 'Yes', animated: 'No', polycount: '15,000 Tris' },
+
+        price: 35.00,
+        originalPrice: 50.00,
+        discount: 50,
+        discountEndsIn: "5 days",
+
+        roadmap: { status: 'prev' } // Thêm cục này vào để nó chui vào cột "Tháng trước"
     }),
     new AssetModel({
         id: 4, slug: 'sci-fi-cyberpunk-mercs', title: 'Sci-Fi Cyberpunk Mercenaries',
         categoryId: 'characters', price: 45.00, packCount: 1, modelCount: 5,
-        initialReleaseDate: '2025-05-12',
-        latestReleaseDate: '2026-11-01',
+        initialReleaseDate: '2027-05-15',
+        latestReleaseDate: '2027-05-15',
         media: mediaBase,
         links: {
             unity: 'http',
@@ -87,13 +109,15 @@ export const characterAssets = [
         },
         shortDescription: 'Highly detailed cyberpunk mercenaries with glowing LED parts and modular gear.',
         features: ['**5 Unique Mercs**', '**LED Emissive Maps**'],
-        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '25,000 Tris' }
+        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '25,000 Tris' },
+
+        roadmap: { status: 'prev' } // Thêm cục này vào để nó chui vào cột "Tháng trước"
     }),
     new AssetModel({
         id: 5, slug: 'stylized-zombie-horde', title: 'Stylized Zombie Horde',
         categoryId: 'characters', price: 25.00, packCount: 3, modelCount: 15,
-        initialReleaseDate: '2025-05-12',
-        latestReleaseDate: '2026-11-01',
+        initialReleaseDate: '2027-05-15',
+        latestReleaseDate: '2027-05-15',
         media: mediaBase, badges: ['TRENDING'],
         links: {
             unity: 'http',
@@ -104,6 +128,8 @@ export const characterAssets = [
         },
         shortDescription: 'A horde of low-poly zombies perfect for survival and wave-defense games.',
         features: ['**15 Zombie Variations**', '**Dismemberment Ready**'],
-        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '5,000 Tris' }
+        techSpecs: { rigged: 'Yes', animated: 'Yes', polycount: '5,000 Tris' },
+
+        roadmap: { status: 'prev' } // Thêm cục này vào để nó chui vào cột "Tháng trước"
     })
 ]

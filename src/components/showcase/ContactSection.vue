@@ -1,5 +1,5 @@
 <template>
-  <section class="py-24">
+  <section id="ContactSection" class="py-12 pb-24">
     <div class="max-w-7xl mx-auto px-6">
       <div class="max-w-5xl mx-auto p-12 lg:p-16 text-center relative overflow-hidden transition-all duration-300
                   bg-white/70 dark:bg-[#161a23]/60 backdrop-blur-xl border-2 border-[#1C1C1C] dark:border-white/10 shadow-2xl shadow-slate-200/50 dark:shadow-none rounded-3xl">

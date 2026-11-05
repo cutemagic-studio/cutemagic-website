@@ -1,6 +1,6 @@
 <template>
     <button @click="toggleTheme" 
-        class="p-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 transition-colors cursor-pointer shadow-sm group">
+        :class="[theme.ui.buttonRoundedBorderBlue]">
         
         <!-- Icon Mặt trời (hiện khi đang ở Dark Mode) -->
         <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:rotate-45 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
@@ -18,5 +18,8 @@
 // Cập nhật lại đường dẫn tới composable useTheme của bạn cho chính xác
 import { useTheme } from '../../composables/useTheme'
 
+import { useThemeStore } from '../../stores/useThemeStore'
+
 const { isDark, toggleTheme } = useTheme()
+const theme = useThemeStore()
 </script>

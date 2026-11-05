@@ -37,7 +37,9 @@ export const environmentAssets = [
         
         shortDescription: 'Complete collection of stylized trees, foliage, and modular dioramas.',
         features: ['**150+ Foliage Models**', '**URP/HDRP Ready**'],
-        techSpecs: { rigged: 'No', animated: 'No', polycount: '500 Tris avg' }
+        techSpecs: { rigged: 'No', animated: 'No', polycount: '500 Tris avg' },
+
+        roadmap: { status: 'current', progress: 85, note: 'Đang tối ưu LOD' } // Thêm cục này vào để nó chui vào cột "Tháng này"
     }),
     new AssetModel({
         id: 7, slug: 'grand-archipelago-dioramas', title: 'Grand Archipelago',
@@ -61,7 +63,9 @@ export const environmentAssets = [
         },
         shortDescription: 'Modular floating island dioramas featuring smooth matte clay-like finishes.',
         features: ['**Floating Islands**', '**Clay-like shading**'],
-        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Various' }
+        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Various' },
+        
+        roadmap: { status: 'current', progress: 85, note: 'Đang tối ưu LOD' } // Thêm cục này vào để nó chui vào cột "Tháng này"
     }),
     new AssetModel({
         id: 8, slug: 'low-poly-apartment', title: 'Low Poly Apartment Interior',
@@ -85,7 +89,9 @@ export const environmentAssets = [
         },
         shortDescription: 'Build modern apartments with over 800 ready-to-use prefabs.',
         features: ['**879 Prefabs**', '**Modular Walls**'],
-        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' }
+        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' },
+        
+        roadmap: { status: 'current', progress: 85, note: 'Đang tối ưu LOD' } // Thêm cục này vào để nó chui vào cột "Tháng này"
     }),
     new AssetModel({
         id: 9, slug: 'stylized-desert-oasis', title: 'Stylized Desert Oasis',
@@ -109,7 +115,9 @@ export const environmentAssets = [
         },
         shortDescription: 'Sand dunes, palm trees, ruins, and props to build a beautiful desert.',
         features: ['**Modular Ruins**', '**Stylized Cacti**'],
-        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' }
+        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' },
+        
+        roadmap: { status: 'current', progress: 85, note: 'Đang tối ưu LOD' } // Thêm cục này vào để nó chui vào cột "Tháng này"
     }),
     new AssetModel({
         id: 10, slug: 'spooky-graveyard-pack', title: 'Spooky Graveyard Pack',
@@ -133,6 +141,8 @@ export const environmentAssets = [
         },
         shortDescription: 'Tombstones, dead trees, and spooky fences for Halloween-themed levels.',
         features: ['**Tombstones & Gates**', '**Fog Particles included**'],
-        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' }
+        techSpecs: { rigged: 'No', animated: 'No', polycount: 'Lowpoly' },
+
+        roadmap: { status: 'current', progress: 85, note: 'Đang tối ưu LOD' } // Thêm cục này vào để nó chui vào cột "Tháng này"
     })
 ]

@@ -33,7 +33,9 @@ export const uiKitAssets = [
             unreal: 'http'
         },
         shortDescription: 'A versatile, clean UI kit perfect for modern mobile apps and simulation games.',
-        techSpecs: { rigged: 'N/A', animated: 'Yes (UI Tweens)', polycount: '2D Sprites' }
+        techSpecs: { rigged: 'N/A', animated: 'Yes (UI Tweens)', polycount: '2D Sprites' },
+
+        roadmap: { status: 'next', estimatedDelivery: 'Đầu tháng sau' } // Thêm cục này vào để nó chui vào cột "Tháng sau"
     }),
     new AssetModel({
         id: 12, slug: 'fantasy-rpg-menu', title: 'Fantasy RPG Menu System',
@@ -54,7 +56,9 @@ export const uiKitAssets = [
             unreal: 'http'
         },
         shortDescription: 'Wood and iron themed UI elements for inventory, skill trees, and quests.',
-        techSpecs: { rigged: 'N/A', animated: 'No', polycount: '2D Sprites' }
+        techSpecs: { rigged: 'N/A', animated: 'No', polycount: '2D Sprites' },
+        
+        roadmap: { status: 'next', estimatedDelivery: 'Đầu tháng sau' } // Thêm cục này vào để nó chui vào cột "Tháng sau"
     }),
     new AssetModel({
         id: 13, slug: 'sci-fi-hud-interface', title: 'Sci-Fi HUD Interface',
@@ -75,6 +79,8 @@ export const uiKitAssets = [
             unreal: 'http'
         },
         shortDescription: 'Futuristic holograms, crosshairs, and sci-fi data panels for shooters.',
-        techSpecs: { rigged: 'N/A', animated: 'Yes', polycount: '2D/3D Hybrid' }
+        techSpecs: { rigged: 'N/A', animated: 'Yes', polycount: '2D/3D Hybrid' },
+        
+        roadmap: { status: 'next', estimatedDelivery: 'Đầu tháng sau' } // Thêm cục này vào để nó chui vào cột "Tháng sau"
     })
 ]
