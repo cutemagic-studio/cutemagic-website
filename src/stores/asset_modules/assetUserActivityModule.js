@@ -11,6 +11,9 @@ import {
   saveIdsToStorage
 } from './assetHelpers'
 
+// Thêm import ở đầu file assetUserActivityModule.js:
+import { pushActivityNotificationLog } from '../../services/activityLogService'
+
 // ==========================================
 // 1. GETTERS CHO RECENTLY VIEWED & FAVORITES
 // ==========================================
@@ -124,6 +127,14 @@ export const userActivityActions = {
     } else {
       this.favoriteIds = [numericId, ...this.favoriteIds].slice(0, MAX_FAVORITE_ITEMS)
       if (targetAsset.metrics) targetAsset.metrics.likes = (targetAsset.metrics.likes || 0) + 1
+    
+      // Bên trong nhánh else (khi người dùng thả tim mới) của hàm toggleFavorite:
+      pushActivityNotificationLog('LIKE_ASSET', {
+        path: window.location.pathname,
+        assetId: numericId,
+        assetTitle: targetAsset.title
+      })
+    
     }
 
     // Đồng bộ lượt Like thật lên Firebase

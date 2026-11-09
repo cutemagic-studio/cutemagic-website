@@ -6,7 +6,7 @@
       class="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 font-sans select-none"
       @click.self="notifyStore.handleConfirmChoice(false)"
     >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
+      <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
         
         <!-- Thanh màu cảnh báo trên đỉnh -->
         <div class="absolute top-0 left-0 right-0 h-1.5" :class="variantClasses.topBar"></div>

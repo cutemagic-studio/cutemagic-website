@@ -14,7 +14,7 @@
       @create="openCreateModal"
     />
 
-    <!-- 2. Năm Thẻ Tóm tắt Trạng thái Kho Asset -->
+    <!-- 2. Sáu Thẻ Tóm tắt Trạng thái Kho Asset (Có thẻ Đã xóa mềm deleted_at) -->
     <AssetStatusCards
       v-model:status-filter="statusFilter"
       :total-count="assetStore.assets.length"
@@ -29,14 +29,19 @@
       :categories="categoriesWithoutAll"
     />
 
-    <!-- 4. Bảng Danh sách Asset Pack & Thao tác Nhanh -->
+    <!-- 4. Bảng Danh sách Asset Pack & Thao tác Nhanh (Hỗ trợ Parallel Backup & Soft Delete) -->
     <AssetTable
       :assets="filteredAssets"
+      :backup-map="assetStore.backupMap"
+      :is-trash-view="statusFilter === 'deleted'"
       @toggle-flag="handleQuickToggleFlag"
       @touch-today="handleTouchToday"
       @edit="openEditModal"
       @clone="handleCloneAsset"
       @delete="handleDeleteAsset"
+      @restore-backup="handleRestoreParallelBackup"
+      @restore-deleted="handleRestoreSoftDeleted"
+      @hard-delete="handleHardDeleteAsset"
     />
 
     <!-- 5. Modal Biên tập 6-Tab CmgAssetModel -->
@@ -95,12 +100,19 @@ const countByStatus = computed(() => ({
   discount: assetStore.assets.filter(a => a.hasDiscount).length,
   free: assetStore.assets.filter(a => a.isFree).length,
   upcoming: assetStore.upcomingAssets.length,
-  roadmap: assetStore.roadmapAssets.length
+  roadmap: assetStore.roadmapAssets.length,
+  deleted: (assetStore.deletedAssets || []).length
 }))
 
 const filteredAssets = computed(() => {
   const q = searchQuery.value.toLowerCase().trim()
-  return [...assetStore.assets]
+
+  // Nếu đang chọn thẻ "Đã xóa mềm" -> Lấy từ mảng deletedAssets, ngược lại lấy từ mảng assets đang hoạt động
+  const sourceList = statusFilter.value === 'deleted'
+    ? [...(assetStore.deletedAssets || [])]
+    : [...(assetStore.assets || [])]
+
+  return sourceList
     .filter(item => {
       const matchSearch = !q ||
         String(item.id).includes(q) ||
@@ -113,8 +125,9 @@ const filteredAssets = computed(() => {
       let matchStatus = true
       if (statusFilter.value === 'discount') matchStatus = item.hasDiscount
       else if (statusFilter.value === 'free') matchStatus = item.isFree
-      else if (statusFilter.value === 'upcoming') matchStatus = Boolean(item.dates?.availableIn) || item.roadmap?.status === 'next'
+      else if (statusFilter.value === 'upcoming') matchStatus = Boolean(item.availableIn) || item.roadmap?.status === 'next'
       else if (statusFilter.value === 'roadmap') matchStatus = item.isInRoadmap
+      else if (statusFilter.value === 'deleted') matchStatus = item.isDeleted
 
       return matchSearch && matchCategory && matchStatus
     })
@@ -131,22 +144,37 @@ const filteredAssets = computed(() => {
 const openCreateModal = () => {
   isEditMode.value = false
   const today = getTodayDateString()
-  const nextFree6DigitId = getNextUnusedAssetId(assetStore.assets)
+  const allKnown = assetStore.allAssetsIncludingDeleted || assetStore.assets
+  const nextFree6DigitId = getNextUnusedAssetId(allKnown)
 
   const blank = new CmgAssetModel({
     id: nextFree6DigitId,
     categoryId: 'characters',
-    dates: { initialRelease: today, latestUpdate: today, availableIn: '' },
+    dates: {
+      created_at: today,
+      recordCreatedDate: today,
+      initialRelease: today,
+      latestUpdate: today
+    },
+    roadmap: {
+      status: null,
+      progress: 0,
+      estimatedDelivery: today,
+      note: ''
+    },
     techSpecs: { packCount: 1, modelCount: 20 }
   })
 
-  editingAssetData.value = JSON.parse(JSON.stringify(blank))
+  editingAssetData.value = blank.toPlainObject()
   isModalOpen.value = true
 }
 
 const openEditModal = (asset) => {
   isEditMode.value = true
-  editingAssetData.value = JSON.parse(JSON.stringify(asset))
+  const plain = typeof asset.toPlainObject === 'function'
+    ? asset.toPlainObject()
+    : JSON.parse(JSON.stringify(asset))
+  editingAssetData.value = plain
   isModalOpen.value = true
 }
 
@@ -157,8 +185,8 @@ const handleSaveAsset = async (payload) => {
     isModalOpen.value = false
 
     notify.success(
-      isEditMode.value ? 'Cập nhật thành công!' : 'Tạo mới thành công!',
-      `Đã lưu gói "${savedModel.title}" (ID: #${savedModel.id}) lên Firebase.`
+      isEditMode.value ? 'Cập nhật & Lưu Backup thành công!' : 'Tạo mới & Khởi tạo Backup thành công!',
+      `Đã lưu gói "${savedModel.title}" (#${savedModel.id}) và đồng bộ bản ghi song song.`
     )
   } catch (err) {
     notify.error('Lỗi khi lưu Asset Pack', err.message)
@@ -188,7 +216,7 @@ const handleTouchToday = async (item) => {
 const handleCloneAsset = async (item) => {
   const confirmed = await notify.confirm({
     title: 'Xác nhận nhân bản Asset Pack',
-    message: 'Hệ thống sẽ tạo một bản sao hoàn toàn mới dựa trên thông số của gói này.',
+    message: 'Hệ thống sẽ tạo một bản sao mới kèm bản ghi backup song song dựa trên thông số của gói này.',
     highlightText: `#${item.id} - ${item.title}`,
     confirmText: 'Đồng ý Nhân bản',
     variant: 'info',
@@ -198,7 +226,9 @@ const handleCloneAsset = async (item) => {
   if (!confirmed) return
 
   try {
-    const cloned = JSON.parse(JSON.stringify(item))
+    const cloned = typeof item.toPlainObject === 'function'
+      ? item.toPlainObject()
+      : JSON.parse(JSON.stringify(item))
     cloned.id = null // Tự động cấp ID 6 số mới từ Pool
     cloned.title = `${item.title} (Copy)`
     cloned.slug = `${item.slug}-copy`
@@ -209,31 +239,101 @@ const handleCloneAsset = async (item) => {
   }
 }
 
+// --- XÓA MỀM (SOFT DELETE - deleted_at) ---
 const handleDeleteAsset = async (item) => {
   const confirmed = await notify.confirm({
-    title: 'CẢNH BÁO: Xóa vĩnh viễn Asset Pack?',
-    message: 'Thao tác này sẽ xóa sạch gói tài nguyên này khỏi Firebase Realtime Database và không thể khôi phục.',
+    title: 'Đánh dấu xóa mềm (Soft Delete) Asset Pack?',
+    message: 'Gói này sẽ được gắn dấu thời gian "deleted_at", ẩn khỏi trang người dùng và chuyển vào mục "Đã xóa mềm". Bạn có thể khôi phục lại bất cứ lúc nào.',
     highlightText: `#${item.id} - ${item.title}`,
-    confirmText: 'Xóa vĩnh viễn',
-    variant: 'danger',
+    confirmText: 'Chuyển vào Đã xóa mềm',
+    variant: 'warning',
     icon: '🗑️'
   })
 
   if (!confirmed) return
 
   try {
-    await assetStore.deleteAssetFromFirebase(item.id)
-    notify.success('Đã xóa Asset Pack', `Đã gỡ bỏ gói #${item.id} khỏi hệ thống.`)
+    await assetStore.softDeleteAsset(item.id)
+    notify.warning('Đã đánh dấu xóa mềm', `Gói "#${item.id} - ${item.title}" đã được chuyển vào mục Đã xóa mềm.`)
   } catch (err) {
-    notify.error('Lỗi khi xóa', err.message)
+    notify.error('Lỗi khi xóa mềm', err.message)
+  }
+}
+
+// --- KHÔI PHỤC TRẠNG THÁI TỒN TẠI (GỠ BỎ deleted_at) ---
+const handleRestoreSoftDeleted = async (item) => {
+  const confirmed = await notify.confirm({
+    title: 'Khôi phục trạng thái tồn tại?',
+    message: 'Hệ thống sẽ gỡ bỏ dấu "deleted_at" và đưa Asset Pack này hiển thị trở lại trên cửa hàng.',
+    highlightText: `#${item.id} - ${item.title}`,
+    confirmText: '♻️ Khôi phục ngay',
+    variant: 'info',
+    icon: '♻️'
+  })
+
+  if (!confirmed) return
+
+  try {
+    await assetStore.restoreSoftDeletedAsset(item.id)
+    notify.success('Khôi phục thành công!', `Gói "#${item.id} - ${item.title}" đã hoạt động trở lại.`)
+  } catch (err) {
+    notify.error('Lỗi khi khôi phục', err.message)
+  }
+}
+
+// --- KHÔI PHỤC DỮ LIỆU GẦN NHẤT TỪ BẢN GHI SONG SONG (PARALLEL BACKUP) ---
+const handleRestoreParallelBackup = async (item) => {
+  const backupInfo = assetStore.getParallelBackup(item.id)
+  const backupTime = backupInfo?._backupMeta?.backedUpAt || 'Gần nhất'
+
+  const confirmed = await notify.confirm({
+    title: 'Khôi phục dữ liệu từ Bản ghi song song?',
+    message: `Hệ thống sẽ lấy dữ liệu từ bản ghi backup song song (Lưu lúc: ${backupTime}) để khôi phục cho Asset Pack này.`,
+    highlightText: `#${item.id} - ${backupInfo?.title || item.title}`,
+    confirmText: '⏪ Khôi phục bản gần nhất',
+    variant: 'warning',
+    icon: '⏪'
+  })
+
+  if (!confirmed) return
+
+  try {
+    const restored = await assetStore.restoreAssetFromParallelBackup(item.id)
+    notify.success(
+      'Đã khôi phục từ Bản ghi song song!',
+      `Gói "#${restored.id} - ${restored.title}" đã quay về trạng thái lưu lúc ${backupTime}.`
+    )
+  } catch (err) {
+    notify.error('Lỗi khôi phục bản ghi song song', err.message)
+  }
+}
+
+// --- XÓA VĨNH VIỄN (HARD DELETE TRONG THÙNG RÁC) ---
+const handleHardDeleteAsset = async (item) => {
+  const confirmed = await notify.confirm({
+    title: 'CẢNH BÁO: Xóa vĩnh viễn khỏi Database?',
+    message: 'Thao tác này sẽ xóa sạch cả bản ghi chính lẫn bản ghi backup song song trên Firebase và KHÔNG THỂ khôi phục.',
+    highlightText: `#${item.id} - ${item.title}`,
+    confirmText: '🔥 Xóa vĩnh viễn',
+    variant: 'danger',
+    icon: '🔥'
+  })
+
+  if (!confirmed) return
+
+  try {
+    await assetStore.hardDeleteAssetPermanently(item.id)
+    notify.success('Đã xóa vĩnh viễn', `Đã gỡ bỏ hoàn toàn gói #${item.id} khỏi Firebase.`)
+  } catch (err) {
+    notify.error('Lỗi khi xóa vĩnh viễn', err.message)
   }
 }
 
 const handleSeedDatabase = async () => {
   const confirmed = await notify.confirm({
     title: 'Xác nhận ghi đè dữ liệu gốc?',
-    message: 'Thao tác này sẽ đồng bộ lại toàn bộ 30 gói asset mẫu chuẩn 6 chữ số từ file JS lên Firebase.',
-    highlightText: 'Ghi đè nhánh cmg_assets',
+    message: 'Thao tác này sẽ đồng bộ lại toàn bộ 30 gói asset mẫu chuẩn 6 chữ số lên cả nhánh chính và nhánh bản ghi song song trên Firebase.',
+    highlightText: 'Ghi đè cmg_assets & cmg_assets_backup',
     confirmText: 'Đồng ý Ghi đè',
     variant: 'warning',
     icon: '☁️'
@@ -244,7 +344,7 @@ const handleSeedDatabase = async () => {
   isSaving.value = true
   try {
     await assetStore.seedMockAssetsToFirebase()
-    notify.success('Đồng bộ thành công!', 'Đã nạp thành công 30 Asset Pack mẫu chuẩn lên Firebase.')
+    notify.success('Đồng bộ thành công!', 'Đã nạp 30 Asset Pack mẫu cùng 30 bản ghi backup song song lên Firebase.')
   } catch (err) {
     notify.error('Lỗi đồng bộ', err.message)
   } finally {

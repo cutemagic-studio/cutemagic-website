@@ -310,7 +310,7 @@ export const firebaseAdminActions = {
     ])
   },
 
-  // Giữ tên hàm deleteAssetFromFirebase trỏ vào softDeleteAsset để an toàn tuyệt đối 
+  // Giữ tên hàm deleteAssetFromFirebase trỏ vào softDeleteAsset để an toàn tuyệt đối  
   async deleteAssetFromFirebase(assetId) {
     return await this.softDeleteAsset(assetId)
   },

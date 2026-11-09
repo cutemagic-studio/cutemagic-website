@@ -4,12 +4,10 @@
   <!-- TRƯỜNG HỢP 1: CHƯA XÁC THỰC -> HIỆN MÀN HÌNH KHÓA BẢO MẬT -->
   <!-- ========================================================= -->
   <div v-if="!isAuthenticated" class="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans select-none relative overflow-hidden">
-    <!-- Hiệu ứng ánh sáng nền -->
     <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
     <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
     <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl relative z-10">
-      <!-- Icon Khiên bảo mật -->
       <div class="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-6 text-3xl shadow-inner">
         🔐
       </div>
@@ -49,7 +47,6 @@
             </button>
           </div>
 
-          <!-- Thông báo lỗi hoặc đếm ngược khóa tạm thời -->
           <p v-if="lockoutRemaining > 0" class="text-xs font-bold text-amber-400 mt-2.5 flex items-center gap-1.5">
             <span>⏳</span> Nhập sai quá nhiều lần. Vui lòng thử lại sau {{ lockoutRemaining }}s.
           </p>
@@ -81,80 +78,137 @@
   <!-- ========================================================= -->
   <div v-else class="h-screen flex bg-transparent font-sans text-slate-900 overflow-hidden">
 
-    <!-- SIDEBAR TRÁI -->
-    <aside class="w-68 bg-[#1e1e1e] border-r-2 border-slate-200/80 p-6 flex flex-col h-full shrink-0 shadow-sm z-10">
-      <div class="mb-8 px-2 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-200">
+    <!-- ======================================================= -->
+    <!-- SIDEBAR TRÁI (HỖ TRỢ THU GỌN CHỈ HIỂN THỊ ICON)         -->
+    <!-- ======================================================= -->
+    <aside 
+      :class="[
+        'bg-[#1e1e1e] border-r-2 border-slate-200/80 flex flex-col h-full shrink-0 shadow-sm z-20 transition-all duration-300 relative',
+        isSidebarCollapsed ? 'w-20 p-3' : 'w-68 p-6'
+      ]"
+    >
+      <!-- Nút Thu gọn / Mở rộng Sidebar nằm trên cạnh phải Sidebar -->
+      <button
+        type="button"
+        @click="toggleSidebar"
+        class="absolute -right-3.5 top-7 w-7 h-7 rounded-full bg-[#ffe600] hover:bg-blue-600 text-[#1e1e1e] hover:text-white border-2 border-[#1e1e1e] flex items-center justify-center text-xs font-black shadow-md cursor-pointer transition-all z-30"
+        :title="isSidebarCollapsed ? 'Mở rộng Sidebar' : 'Thu gọn Sidebar (Chỉ hiện Icon)'"
+      >
+        {{ isSidebarCollapsed ? '❯' : '❮' }}
+      </button>
+
+      <!-- Logo & Tên Hệ Thống -->
+      <div 
+        class="mb-8 flex items-center transition-all"
+        :class="isSidebarCollapsed ? 'justify-center px-0' : 'px-2 gap-3'"
+      >
+        <div 
+          @click="toggleSidebar"
+          class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-200 shrink-0 cursor-pointer"
+          title="CuteMagic Admin OS"
+        >
           CM
         </div>
-        <div>
-          <h1 class="text-lg font-black text-slate-900 tracking-tight leading-none">CuteMagic</h1>
+        <div v-if="!isSidebarCollapsed" class="min-w-0 overflow-hidden">
+          <h1 class="text-lg font-black text-white tracking-tight leading-none truncate">CuteMagic</h1>
           <div class="flex items-center gap-1.5 mt-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">Admin OS v2.0</p>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest truncate">Admin OS v2.0</p>
           </div>
         </div>
       </div>
 
-      <p class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Quản trị hệ thống</p>
-      <nav class="flex-1 space-y-1.5 overflow-y-auto pr-1 custom-scrollbar">
+      <p v-if="!isSidebarCollapsed" class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+        Quản trị hệ thống
+      </p>
+
+      <!-- Danh sách Menu Tabs (Khi thu gọn chỉ hiện Icon) -->
+      <nav class="flex-1 space-y-2 overflow-y-auto pr-0.5 custom-scrollbar">
         <button 
           v-for="tab in tabs" 
           :key="tab.id" 
           @click="activeTab = tab" 
+          :title="isSidebarCollapsed ? `${tab.name} (${tab.badge || ''})` : ''"
           :class="[
-            // 'w-full flex items-center justify-between px-4 py-3.5 rounded-xl font-bold text-xs transition-all cursor-pointer',
-            theme.ui.buttonRoundedBorderOrange, 'w-full flex items-center justify-between',
+            theme.ui.buttonRoundedBorderOrange,
+            'w-full flex items-center relative transition-all',
+            isSidebarCollapsed ? 'justify-center !px-0 !py-3' : 'justify-between',
             activeTab.id === tab.id
-              ? 'dark:bg-[#ffe600] shadow-lg shadow-[#1e1e1e] !text-[#363636] !border-[#1e1e1e]'
+              ? 'dark:bg-[#ffe600] bg-[#ffe600] shadow-lg shadow-[#1e1e1e] !text-[#363636] !border-[#1e1e1e]'
               : ''
           ]"
         >
-          <div class="flex items-center gap-3">
-            <span class="text-base">{{ tab.icon }}</span>
-            <span :class="[activeTab.id === tab.id ? 'font-bold' : '']">{{ tab.name }}</span>
+          <div class="flex items-center" :class="isSidebarCollapsed ? 'justify-center' : 'gap-3'">
+            <span class="text-lg leading-none">{{ tab.icon }}</span>
+            <span v-if="!isSidebarCollapsed" :class="[activeTab.id === tab.id ? 'font-bold' : '']">
+              {{ tab.name }}
+            </span>
           </div>
+
+          <!-- Badge khi Sidebar mở rộng -->
           <span 
-            v-if="tab.badge" 
+            v-if="!isSidebarCollapsed && tab.badge" 
             :class="activeTab.id === tab.id ? 'bg-white/20 text-[#363636]' : 'bg-blue-50 text-blue-600'"
             class="px-2 py-0.5 rounded-lg text-[10px] font-black border-2 border-[#1e1e1e]"
           >
-            {{ tab.badge }}
+            {{ tab.id === 'activity_notifications' ? activityStore.totalLogsCount : tab.badge }}
           </span>
+
+          <!-- Chấm tròn báo hiệu khi Sidebar đang thu gọn -->
+          <span
+            v-if="isSidebarCollapsed && tab.id === 'activity_notifications' && activityStore.totalLogsCount > 0"
+            class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#00EE76] border border-[#1e1e1e]"
+          ></span>
         </button>
       </nav>
 
-      <!-- Thông tin Admin & Nút Khóa máy (Đăng xuất) -->
-      <div class="mt-auto pt-5 border-t border-slate-100 space-y-4">
-        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
+      <!-- Thông tin Admin & Nút Khóa máy (Tự động gọn lại khi thu nhỏ Sidebar) -->
+      <div class="mt-auto pt-4 border-t border-slate-800 space-y-3">
+        <div v-if="!isSidebarCollapsed" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/60">
           <div class="flex items-center justify-between mb-1">
             <span class="text-[10px] font-black uppercase text-slate-400">Database Engine</span>
             <span class="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-black uppercase">Firebase RTDB</span>
           </div>
-          <p class="text-[11px] font-bold text-slate-600">Chu kỳ lưu: Tự động 30 ngày</p>
+          <p class="text-[11px] font-bold text-slate-600">
+            Activity Logs: {{ activityStore.totalLogsCount }} / {{ activityStore.maxRecordsLimit }}
+          </p>
         </div>
 
-        <div class="flex items-center justify-between px-1">
-          <div>
-            <p class="text-[10px] font-bold text-emerald-600 uppercase flex items-center gap-1">
+        <div 
+          class="flex items-center"
+          :class="isSidebarCollapsed ? 'justify-center' : 'justify-between px-1'"
+        >
+          <div v-if="!isSidebarCollapsed">
+            <p class="text-[10px] font-bold text-emerald-500 uppercase flex items-center gap-1">
               <span>●</span> Đã xác thực
             </p>
-            <p class="text-xs font-black text-slate-800">Admin Cute Magic</p>
+            <p class="text-xs font-black text-white">Admin Cute Magic</p>
           </div>
           <button 
             @click="handleLockAdmin" 
             title="Khóa trang Admin (Đăng xuất)"
-            class="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center gap-1.5 transition-colors font-black text-xs cursor-pointer"
+            :class="[
+              'rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white flex items-center justify-center gap-1.5 transition-colors font-black text-xs cursor-pointer',
+              isSidebarCollapsed ? 'w-11 h-11 p-0' : 'px-3 py-2'
+            ]"
           >
-            <span>🔒</span> Khóa
+            <span>🔒</span>
+            <span v-if="!isSidebarCollapsed">Khóa</span>
           </button>
         </div>
       </div>
     </aside>
 
-    <!-- NỘI DUNG CHÍNH BÊN PHẢI -->
-    <main class="flex-1 h-full overflow-y-auto p-6 lg:p-10 relative">
-      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/80">
+    <!-- ======================================================= -->
+    <!-- NỘI DUNG CHÍNH BÊN PHẢI (TỰ ĐỘNG MỞ RỘNG KHI THU SIDEBAR)-->
+    <!-- ======================================================= -->
+    <main class="flex-1 h-full overflow-y-auto p-6 lg:p-8 relative transition-all duration-300">
+      <div 
+        :class="[
+          'mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/80 transition-all duration-300',
+          isSidebarCollapsed ? 'max-w-[1650px]' : 'max-w-7xl'
+        ]"
+      >
         <div>
           <div class="flex items-center gap-2 text-xs font-bold text-[#00EE76] mb-1">
             <span>Admin Control Panel</span>
@@ -162,15 +216,28 @@
             <span>{{ activeTab.name }}</span>
           </div>
           <h2 class="text-2xl lg:text-3xl font-black text-[#ECECEC] tracking-tight">{{ activeTab.name }}</h2>
-          <p class="text-slate-500 text-xs font-medium mt-0.5">{{ activeTab.subtitle }}</p>
+          <p class="text-slate-400 text-xs font-medium mt-0.5">{{ activeTab.subtitle }}</p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Nút Bật/Tắt Âm thanh Thông báo Real-time -->
+          <button
+            type="button"
+            @click="activityStore.toggleSoundMute()"
+            class="px-3.5 py-2.5 rounded-2xl border-2 text-xs font-black transition-all flex items-center gap-2 cursor-pointer"
+            :class="activityStore.soundMuted 
+              ? 'bg-[#1e1e1e] text-slate-400 border-slate-700 hover:border-slate-500' 
+              : 'bg-[#1e1e1e] text-[#ffe600] border-[#ffe600] shadow-sm'"
+            title="Bật / Tắt âm thanh khi có thông báo hoạt động mới"
+          >
+            <span>{{ activityStore.soundMuted ? '🔇 Tắt tiếng' : '🔊 Chuông Live' }}</span>
+          </button>
+
           <router-link 
             to="/assets"
             class="px-4 py-2.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-500 text-slate-700 hover:text-blue-600 text-xs font-black transition-all shadow-sm"
           >
-          Mở Asset Library
+            Mở Asset Library
           </router-link>
           <router-link 
             to="/"
@@ -181,33 +248,51 @@
         </div>
       </div>
 
-      <div class="max-w-7xl mx-auto pb-12">
+      <div 
+        :class="[
+          'mx-auto pb-12 transition-all duration-300',
+          isSidebarCollapsed ? 'max-w-[1650px]' : 'max-w-7xl'
+        ]"
+      >
         <transition name="fade" mode="out-in">
           <component :is="activeTab.component" @switch-tab="handleSwitchTab" />
         </transition>
       </div>
     </main>
 
-
-    <!-- Nhúng Hộp thoại xác nhận và Khung Toast nổi dùng chung toàn Admin -->
+    <!-- Nhúng Hộp thoại xác nhận, Toast CRUD và Live Activity Toast Real-time -->
     <ConfirmDialog />
     <ToastContainer />
+    <LiveActivityToast />
   </div>
 </template>
 
 <script setup>
 import { ref, markRaw, onMounted, nextTick } from 'vue'
 import DashboardTab from './tabs/Dashboard.vue'
-// import ContentManager from './tabs/user_vote/ContentManager.vue'
 import VisitorLogsTab from './tabs/user_tracker/VisitorLogs.vue'
 import AssetManagerTab from './tabs/asset_manager/AssetManager.vue'
+import ActivityNotificationsTab from './tabs/activity_notifications/ActivityNotificationsManager.vue'
+
 import { isAdminAuthenticated, verifyAdminPassword, logoutAdmin } from '../../utils/adminAuth'
+import { useActivityNotificationStore } from '../../stores/useActivityNotificationStore'
+import { useThemeStore } from '../../stores/useThemeStore.js'
 
 import ConfirmDialog from './common/ConfirmDialog.vue'
 import ToastContainer from './common/ToastContainer.vue'
+import LiveActivityToast from './common/LiveActivityToast.vue'
 
-import { useThemeStore } from '../../stores/useThemeStore.js'
 const theme = useThemeStore()
+const activityStore = useActivityNotificationStore()
+
+// --- TRẠNG THÁI THU GỌN SIDEBAR (LƯU VÀO LOCALSTORAGE) ---
+const SIDEBAR_COLLAPSED_KEY = 'cmg_admin_sidebar_collapsed'
+const isSidebarCollapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true')
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value
+  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isSidebarCollapsed.value ? 'true' : 'false')
+}
 
 // --- TRẠNG THÁI XÁC THỰC BẢO MẬT ---
 const isAuthenticated = ref(isAdminAuthenticated())
@@ -219,11 +304,59 @@ const failedAttempts = ref(0)
 const lockoutRemaining = ref(0)
 const passwordInputRef = ref(null)
 
+// --- DANH SÁCH CÁC TAB QUẢN TRỊ ---
+const tabs = [
+  { 
+    id: 'dashboard', 
+    name: 'Tổng quan', 
+    subtitle: 'Báo cáo tổng hợp kho tài nguyên 3D & Lưu lượng người dùng thời gian thực.',
+    icon: '📊', 
+    badge: 'Live',
+    component: markRaw(DashboardTab) 
+  },
+  { 
+    id: 'activity_notifications', 
+    name: 'Nhật ký Thông báo', 
+    subtitle: 'Luồng thông báo hoạt động tiêu biểu thời gian thực, hàng đợi sự kiện & giới hạn 10.000 bản ghi.',
+    icon: '🔔', 
+    badge: '10K',
+    component: markRaw(ActivityNotificationsTab) 
+  },
+  { 
+    id: 'logs', 
+    name: 'Hành vi Người dùng', 
+    subtitle: 'Theo dõi hành trình theo IP duy nhất, lượt xem Asset Pack và lượt tải xuống.',
+    icon: '🌐', 
+    badge: '30d',
+    component: markRaw(VisitorLogsTab) 
+  },
+  { 
+    id: 'assets', 
+    name: 'Quản lý Asset Pack', 
+    subtitle: 'Thêm, sửa, xóa mềm, khôi phục bản ghi song song và đồng bộ CmgAssetModel với Firebase.',
+    icon: '📦', 
+    badge: 'CMS',
+    component: markRaw(AssetManagerTab) 
+  }
+]
+
+const activeTab = ref(tabs[0])
+
+const handleSwitchTab = (tabId) => {
+  const target = tabs.find(t => t.id === tabId)
+  if (target) activeTab.value = target
+}
+
 onMounted(() => {
+  // Đăng ký hàm chuyển tab để khi click vào LiveActivityToast sẽ nhảy thẳng sang tab 'activity_notifications'
+  activityStore.registerTabSwitcher(handleSwitchTab)
+
   if (!isAuthenticated.value) {
     nextTick(() => {
       passwordInputRef.value?.focus()
     })
+  } else {
+    activityStore.initRealtimeActivityStream()
   }
 })
 
@@ -241,11 +374,11 @@ const handleUnlock = async () => {
     isAuthenticated.value = true
     passwordInput.value = ''
     failedAttempts.value = 0
+    activityStore.initRealtimeActivityStream()
   } else {
     failedAttempts.value++
     passwordInput.value = ''
     
-    // Nếu nhập sai 5 lần liên tiếp -> Khóa ô nhập 30 giây chống dò mật khẩu
     if (failedAttempts.value >= 5) {
       lockoutRemaining.value = 30
       const timer = setInterval(() => {
@@ -262,55 +395,11 @@ const handleUnlock = async () => {
   }
 }
 
-// Xử lý khi bấm nút "Khóa" ở góc dưới Sidebar
 const handleLockAdmin = () => {
   logoutAdmin()
   isAuthenticated.value = false
   nextTick(() => {
     passwordInputRef.value?.focus()
   })
-}
-
-// --- DANH SÁCH CÁC TAB QUẢN TRỊ ---
-const tabs = [
-  { 
-    id: 'dashboard', 
-    name: 'Tổng quan', 
-    subtitle: 'Báo cáo tổng hợp kho tài nguyên 3D & Lưu lượng người dùng thời gian thực.',
-    icon: '📊', 
-    badge: 'Live',
-    component: markRaw(DashboardTab) 
-  },
-  { 
-    id: 'logs', 
-    name: 'Hành vi Người dùng', 
-    subtitle: 'Theo dõi hành trình theo IP duy nhất, lượt xem Asset Pack và lượt tải xuống.',
-    icon: '🌐', 
-    badge: '30d',
-    component: markRaw(VisitorLogsTab) 
-  },
-{ 
-    id: 'assets', 
-    name: 'Quản lý Asset Pack', 
-    subtitle: 'Thêm, sửa, xóa, bật khuyến mãi và đồng bộ CmgAssetModel trực tiếp với Firebase.',
-    icon: '📦', 
-    badge: 'CMS',
-    component: markRaw(AssetManagerTab) 
-  },
-
-//   { 
-//     id: 'vote', 
-//     name: 'Quản lý Bình chọn (Vote)', 
-//     subtitle: 'Quản lý danh sách bình chọn ý tưởng Asset Pack mới từ cộng đồng.',
-//     icon: '🗳️', 
-//     component: markRaw(ContentManager) 
-//   }
-]
-
-const activeTab = ref(tabs[0])
-
-const handleSwitchTab = (tabId) => {
-  const target = tabs.find(t => t.id === tabId)
-  if (target) activeTab.value = target
 }
 </script>

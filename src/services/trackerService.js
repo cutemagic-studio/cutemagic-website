@@ -12,6 +12,9 @@ import {
   endAt
 } from 'firebase/database'
 
+// Thêm vào đầu file src/services/trackerService.js:
+import { pushActivityNotificationLog, setCachedVisitorGeoProfile } from './activityLogService'
+
 const METADATA_STORAGE_KEY = 'cmg_visitor_meta_v2'
 const ABSTRACT_API_KEY = '03d032102980424980c8dfcd3030c09f'
 
@@ -46,12 +49,17 @@ const getDeviceInfo = () => {
 /**
  * 1. LẤY HOẶC KHỞI TẠO METADATA TỪ IP (Có Cache LocalStorage tránh hết quota API)
  */
+// 1. Trong hàm fetchVisitorMetadata() của src/services/trackerService.js:
 export const fetchVisitorMetadata = async () => {
   try {
     const cached = localStorage.getItem(METADATA_STORAGE_KEY)
     if (cached) {
       const parsed = JSON.parse(cached)
-      if (parsed?.ip && parsed?.visitorKey) return parsed
+      if (parsed?.ip && parsed?.visitorKey) {
+        // Nạp luôn vào bộ nhớ đệm cho Activity Log
+        setCachedVisitorGeoProfile(parsed)
+        return parsed
+      }
     }
   } catch (e) {
     console.warn('[Tracker] Lỗi đọc cache IP:', e)
@@ -75,26 +83,29 @@ export const fetchVisitorMetadata = async () => {
         device
       }
       localStorage.setItem(METADATA_STORAGE_KEY, JSON.stringify(meta))
+      setCachedVisitorGeoProfile(meta)
       return meta
     }
   } catch (error) {
     console.error('[Tracker] Không thể lấy IP từ AbstractAPI:', error)
   }
 
-  // Fallback an toàn nếu người dùng bật AdBlock chặn API IP
   const fallbackId = localStorage.getItem('cmg_fallback_id') || ('guest_' + Math.random().toString(36).substring(2, 10))
   localStorage.setItem('cmg_fallback_id', fallbackId)
   const { browser, device } = getDeviceInfo()
-  return {
+  const fallbackMeta = {
     visitorKey: fallbackId,
     ip: 'Hidden (AdBlock)',
     city: 'Unknown',
     country: 'Unknown',
+    countryCode: '',
     flag: '',
     isp: 'N/A',
     browser,
     device
   }
+  setCachedVisitorGeoProfile(fallbackMeta)
+  return fallbackMeta
 }
 
 /**
@@ -179,6 +190,20 @@ export const trackUserBehavior = async (actionType, payload = {}) => {
       assetTitle: payload.assetTitle || null,
       timestamp: now
     })
+
+    // Đảm bảo đồng bộ hồ sơ địa lý từ biến 'meta'
+    setCachedVisitorGeoProfile(meta)
+
+    // Đẩy bản ghi vào bảng Nhật ký Hoạt động Tiêu biểu (Tự động giới hạn 10.000 bản ghi)
+    await pushActivityNotificationLog(
+      actionType === 'PAGE_VIEW' ? 'PAGE_VISIT' : actionType,
+      {
+        path: payload.path || window.location.pathname,
+        assetId: payload.assetId || null,
+        assetTitle: payload.assetTitle || '',
+        geoProfile: meta
+      }
+    )
 
   } catch (error) {
     console.error('[Tracker] Lỗi ghi nhận hành vi:', error)
