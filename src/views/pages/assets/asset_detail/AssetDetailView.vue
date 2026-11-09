@@ -161,101 +161,10 @@
     </div>
 </template>
 
-<!-- <script setup> 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-
-import RelatedAsset from '../../../components/showcase/asset_gallery/child_components/RelatedAsset.vue' // Điều chỉnh đường dẫn tùy cấu trúc thư mục của bạn
-
-import TheFooter from '../../../components/layout/TheFooter.vue'
-
-// --- TRẠNG THÁI CHO ACCORDION TABS (MOBILE) ---
-const isDescOpen = ref(true)
-const isReviewsOpen = ref(false)
-
-// --- TRẠNG THÁI CHO TABS NGANG (DESKTOP) ---
-const activeTab = ref('description') // Mặc định mở tab description
-
-// --- STATE BẮT SỰ KIỆN CUỘN TRANG (CHO BREADCRUMB) ---
-const isScrolled = ref(false)
-
-const handleScroll = () => {
-    // Nếu cuộn qua 20px thì bật hiệu ứng Header
-    isScrolled.value = window.scrollY > 20
-}
-
-// --- HÀM GIẢM KHOẢNG CÁCH LĂN CHUỘT (BẢN TỐI ƯU HIỆU NĂNG) ---
-let isTicking = false // Biến khóa (van an toàn)
-
-const handleCustomWheel = (e) => {
-    if (e.ctrlKey) return
-
-    const isTrackpad = (e.deltaY % 1 !== 0) || (Math.abs(e.deltaY) < 50) || (Math.abs(e.deltaX) > 0)
-    if (isTrackpad) return
-
-    e.preventDefault()
-
-    // Nếu trình duyệt đang bận xử lý frame cuộn trước đó thì bỏ qua, không nhồi nhét thêm
-    if (!isTicking) {
-        window.requestAnimationFrame(() => {
-            const scrollStep = 70
-            const direction = Math.sign(e.deltaY)
-
-            window.scrollBy({
-                top: direction * scrollStep,
-                behavior: 'auto'
-            })
-
-            // Xử lý xong frame này thì mở khóa cho lần cuộn tiếp theo
-            isTicking = false
-        })
-
-        isTicking = true // Khóa lại trong lúc chờ frame render
-    }
-}
-
-onMounted(() => {
-    window.addEventListener('scroll', handleScroll)
-
-    window.addEventListener('wheel', handleCustomWheel, { passive: false })
-})
-
-onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll)
-
-    window.removeEventListener('wheel', handleCustomWheel)
-})
-
-// --- DỮ LIỆU HÌNH ẢNH MẪU (Carousel) ---
-const images = ref([
-    'https://images.unsplash.com/photo-1618336306534-1188d8dbde69?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=1200&auto=format&fit=crop',
-])
-
-// --- LOGIC ĐIỀU KHIỂN CAROUSEL ---
-const currentIdx = ref(0)
-
-const prevImage = () => {
-    currentIdx.value = currentIdx.value > 0 ? currentIdx.value - 1 : images.value.length - 1
-}
-
-const nextImage = () => {
-    currentIdx.value = currentIdx.value < images.value.length - 1 ? currentIdx.value + 1 : 0
-}
-
-// --- HÀM CUỘN LÊN ĐẦU TRANG ---
-const scrollToTop = () => {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    })
-}
-</script> -->
-
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAssetStore } from '../../../../stores/useAssetStore.js' // Thay đường dẫn Store của bạn vào đây
+import { useAssetStore } from '../../../../stores/useAssetStore.js'
 
 import TheFooter from '../../../../components/layout/TheFooter.vue'
 
@@ -281,75 +190,69 @@ const route = useRoute()
 const router = useRouter()
 const assetStore = useAssetStore()
 
-// Lấy thông tin Asset dựa trên URL Params (VD: /asset/stylized-funny-male-character)
-const currentAsset = computed(() => {
-    // Dùng getAssetBySlug (hoặc getAssetById nếu URL của bạn dùng ID)
-    const asset = assetStore.getAssetById(route.params.id) // Nhớ đổi 'slug' thành 'id' nếu file Router của bạn dùng :id
+// 1. Lấy tham số định danh trên URL (Hỗ trợ linh hoạt cả route :id 6 chữ số hoặc :slug)
+const routeParam = computed(() => route.params.id || route.params.slug)
 
-    // Xử lý khi không tìm thấy sản phẩm (nhập sai URL)
-    if (!asset) {
-        // Tùy chọn: router.push('/404') hoặc đẩy về trang danh sách
-        router.push('/assets')
-        return null
-    }
-    return asset
+// 2. Lấy thông tin Asset từ Pinia Store (Reactive với Firebase)
+const currentAsset = computed(() => {
+    if (!routeParam.value) return null
+    return assetStore.getAssetByIdOrSlug(routeParam.value)
 })
 
+// 3. Chỉ chuyển hướng về '/assets' khi Firebase ĐÃ đồng bộ xong mà ID/Slug vẫn không tồn tại
+watch(
+    [currentAsset, () => assetStore.isFirebaseSynced],
+    ([asset, isSynced]) => {
+        if (isSynced && !asset && routeParam.value) {
+            router.replace('/assets')
+        }
+    },
+    { immediate: true }
+)
+
+// 4. Kiểm tra trạng thái Yêu thích (Tim hồng)
 const isLiked = computed(() => {
     if (!currentAsset.value?.id) return false
     return assetStore.isFavorite(currentAsset.value.id)
 })
 
+// 5. Ghi nhận Lượt xem (Views) lên Firebase & Lưu vào danh sách "Xem gần đây" (Recently Viewed)
+const lastRecordedId = ref(null)
+watch(
+    () => currentAsset.value?.id,
+    (loadedId) => {
+        if (loadedId && loadedId !== lastRecordedId.value) {
+            lastRecordedId.value = loadedId
+            assetStore.recordAssetView(loadedId)
+        }
+    },
+    { immediate: true }
+)
+
 // ========================================================
 // MegaMenu
 // ========================================================
 const activeMenu = ref(null)
-// Hàm xử lý việc chuyển đổi giữa các menu
 const toggleMenu = (menuName) => {
-    if (activeMenu.value === menuName) {
-        // Click lại đúng nút đang mở -> Đóng nó
-        activeMenu.value = null
-    } else {
-        // Click nút khác -> Gán tên nút đó (Tự động đóng nút cũ)
-        activeMenu.value = menuName
-    }
+    activeMenu.value = activeMenu.value === menuName ? null : menuName
 }
 
-// --- LOGIC HÌNH ẢNH CAROUSEL & THUMBNAIL (Dùng Data Thật) ---
+// --- LOGIC HÌNH ẢNH CAROUSEL & FULLSCREEN ---
 const currentImageIdx = ref(0)
 const thumbContainer = ref(null)
 
-// Lấy mảng ảnh từ dữ liệu thật
 const galleryImages = computed(() => {
     return currentAsset.value?.media?.gallery || []
 })
 
-const nextImage = () => {
-    if (galleryImages.value.length === 0) return;
-    currentImageIdx.value = (currentImageIdx.value + 1) % galleryImages.value.length
-}
-const prevImage = () => {
-    if (galleryImages.value.length === 0) return;
-    currentImageIdx.value = currentImageIdx.value === 0
-        ? galleryImages.value.length - 1
-        : currentImageIdx.value - 1
+const handleOpenFullscreen = (imgUrl) => {
+    // Dự phòng nếu bạn có modal phóng to ảnh hoặc mở ảnh ở tab mới
+    if (imgUrl) window.open(imgUrl, '_blank')
 }
 
-// Logic trượt hàng Thumbnail
-const scrollThumbLeft = () => {
-    if (thumbContainer.value) {
-        thumbContainer.value.scrollBy({ left: -200, behavior: 'smooth' })
-    }
-}
-const scrollThumbRight = () => {
-    if (thumbContainer.value) {
-        thumbContainer.value.scrollBy({ left: 200, behavior: 'smooth' })
-    }
-}
-
-// Tự động reset hình ảnh và tab khi click sang sản phẩm khác (ở phần Related)
+// Tự động cuộn lên đầu trang và reset tab khi chuyển sang sản phẩm khác (từ mục Related hoặc nút Next/Prev)
 watch(
-    () => route.params.slug, // Hoặc route.params.id
+    routeParam,
     () => {
         currentImageIdx.value = 0
         activeTab.value = 'description'
@@ -357,17 +260,6 @@ watch(
         isReviewsOpen.value = false
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-)
-
-// Theo dõi mỗi khi ID trên URL thay đổi (Chạy ngay lập tức cả ở lần đầu tiên mở trang)
-watch(
-    () => route.params.id,
-    (newId) => {
-        if (newId) {
-            assetStore.recordAssetView(newId)
-        }
-    },
-    { immediate: true }
 )
 
 // --- TRẠNG THÁI CHO ACCORDION & TABS ---
@@ -400,15 +292,18 @@ const handleCustomWheel = (e) => {
 }
 
 onMounted(() => {
+    // [QUAN TRỌNG]: Đảm bảo đồng bộ dữ liệu Firebase ngay khi khách hàng vào thẳng trang Chi tiết
+    assetStore.initFirebaseAssetsSync()
+
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('wheel', handleCustomWheel, { passive: false })
 })
+
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('wheel', handleCustomWheel)
 })
 
-// --- HÀM CUỘN LÊN ĐẦU TRANG ---
 const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }

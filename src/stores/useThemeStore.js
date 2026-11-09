@@ -132,7 +132,9 @@ export const useThemeStore = defineStore('theme', () => {
 
         buttonRoundedBorderBlue: 'border-2 border-[#1e1e1e] dark:border-[#CFCFCF] hover:border-[#1E90FF] dark:hover:border-[#1E90FF] bg-[#FFFFFF] dark:bg-[#1e1e1e] hover:bg-[#FFFFFF] dark:hover:bg-[#1e1e1e] p-2.5 rounded-xl text-[#1e1e1e] dark:text-[#ECECEC] hover:text-[#1E90FF] dark:hover:text-[#1E90FF] transition-colors cursor-pointer shadow-sm group',
         buttonRoundedBorderGreen: 'border-2 border-[#1e1e1e] dark:border-[#CFCFCF] hover:border-[#00EE76] dark:hover:border-[#00EE76] bg-[#FFFFFF] dark:bg-[#1e1e1e] hover:bg-[#FFFFFF] dark:hover:bg-[#1e1e1e] p-2.5 rounded-xl text-[#1e1e1e] dark:text-[#ECECEC] hover:text-[#00EE76] dark:hover:text-[#00EE76] transition-colors cursor-pointer shadow-sm group',
-        
+        buttonRoundedBorderOrange: 'border-2 border-[#1e1e1e] dark:border-[#CFCFCF] hover:border-[#ffe600] dark:hover:border-[#ffe600] bg-[#FFFFFF] dark:bg-[#1e1e1e] hover:bg-[#FFFFFF] dark:hover:bg-[#1e1e1e] p-2.5 rounded-xl text-[#1e1e1e] dark:text-[#ECECEC] hover:text-[#ffe600] dark:hover:text-[#ffe600] transition-colors cursor-pointer shadow-sm group',
+
+
         buttonSolidRoundedBorder: 'border-2 border-[#CFCFCF] hover:border-[#4F4F4F] dark:hover:border-[#ECECEC] bg-[#ECECEC] dark:bg-[#1e1e1e] hover:bg-[#32CD32] dark:hover:bg-[#32CD32] p-2.5 rounded-xl text-[#1e1e1e] dark:text-[#ECECEC] hover:text-[#1e1e1e] dark:hover:text-[#ECECEC] transition-colors cursor-pointer shadow-sm group',
 
         // ====================================================
@@ -142,9 +144,12 @@ export const useThemeStore = defineStore('theme', () => {
         // #00BFFF #1E90FF #1e5aff
         // #ffe600
         // #E33539 #FF4040 
+        // #FF6347
+        // #8470FF
         // ====================================================
         assetCard: 'flex flex-col bg-white dark:bg-[#1e1e1e] rounded-xl cursor-pointer overflow-hidden hover:shadow-2xl transition-all duration-200 w-full h-full border-2 border-[#363636] dark:border-gray-700 hover:border-[#00BFFF] dark:hover:border-[#FFD700] group/card',
         assetCardTitle: 'text-[#CFCFCF] dark:text-[#ECECEC] text-sm sm:text-base font-bold text-center leading-tight line-clamp-2 hover:text-[#ffe600] dark:hover:text-[#00FF7F] transition-colors',
+        assetCardNumber: 'text-[#00FF7F] dark:text-[#00FF7F] font-bold text-center leading-tight line-clamp-2 hover:text-[#ffe600] dark:hover:text-[#00FF7F] transition-colors',
         assetCardRecentlyViewed: 'flex flex-row items-center bg-white dark:bg-[#1e1e1e] rounded-xl cursor-pointer overflow-hidden hover:shadow-2xl transition-all duration-200 w-full h-[150px] border-2 border-[#363636] dark:border-gray-700 hover:border-[#00BFFF] dark:hover:border-[#00FF7F] group/card',
         assetCardTitleRecentlyViewed: 'text-[#363636] dark:text-[#ECECEC] hover:text-[#1E90FF] dark:hover:text-[#00EE76] text-sm sm:text-base font-bold text-left leading-tight line-clamp-2 transition-colors',
     
@@ -161,6 +166,9 @@ export const useThemeStore = defineStore('theme', () => {
         // text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4 px-1 relative z-10
         megamenuTitleHeader: 'text-[#363636] dark:text-[#ECECEC] hover:text-[#1E90FF] dark:hover:text-[#00EE76] text-xs font-black uppercase tracking-widest mb-4 relative z-10',
     
+
+        //
+        adminRoundedContainer: 'border-2 border-[#1e1e1e] dark:border-[#CFCFCF] hover:border-[#1E90FF] dark:hover:border-[#1E90FF] bg-[#FFFFFF] dark:bg-[#1e1e1e] hover:bg-[#FFFFFF] dark:hover:bg-[#1e1e1e] p-2.5 rounded-xl text-[#1e1e1e] dark:text-[#ECECEC] hover:text-[#1E90FF] dark:hover:text-[#1E90FF] transition-colors cursor-pointer shadow-sm group p-6 rounded-xl shadow-sm flex flex-col justify-between',
     }))
 
     // ====================================================

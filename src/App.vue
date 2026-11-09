@@ -19,7 +19,7 @@
 import BackgroundGlow from './components/layout/BackgroundGlow.vue'
 
 import TrafficTracker from './components/utils/TrafficTracker.vue'
-import UserTracker from './views/admin/tabs/user_tracker/UserTracker.vue' // Import vào đây
+import UserTracker from './components/admin/tabs/user_tracker/UserTracker.vue'
 
 import { useTheme } from './composables/useTheme'
 

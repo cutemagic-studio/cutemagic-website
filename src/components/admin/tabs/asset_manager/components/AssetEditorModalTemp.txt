@@ -1,0 +1,588 @@
+<!-- src/components/admin/tabs/asset_manager/components/AssetEditorModal.vue -->
+<template>
+    <div v-if="show" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+        @click.self="$emit('close')">
+        <div
+            class="bg-white rounded-3xl w-8xl max-w-8xl w-full h-[95vh] max-h-[95vh] flex flex-col shadow-2xl overflow-hidden border-2 border-[#8470FF]">
+
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div>
+                    <span class="text-[12px] font-black uppercase tracking-widest text-blue-400">
+                        {{ isEditMode ? `Chỉnh sửa Asset Pack #${formData.id}` : 'Tạo mới Asset Pack' }}
+                    </span>
+                    <h3 class="text-lg font-black truncate max-w-lg">{{ formData.title || 'Untitled Asset Pack' }}</h3>
+                </div>
+                <button @click="$emit('close')"
+                    class="w-8 h-8 rounded-full bg-white/10 hover:bg-rose-500 text-white font-black text-sm cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Thanh Chuyển 6 Nhóm Thuộc tính của CmgAssetModel -->
+            <div
+                class="px-6 pt-3 bg-slate-50 border-b-2 border-[#1e1e1e] flex items-center gap-2 overflow-x-auto shrink-0">
+                <button v-for="mTab in modalTabs" :key="mTab.id" @click="activeModalTab = mTab.id"
+                    :class="activeModalTab === mTab.id ? 'bg-white text-blue-600 border-b-2 border-blue-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+                    class="px-4 py-2.5 rounded-t-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer">
+                    {{ mTab.icon }} {{ mTab.label }}
+                </button>
+            </div>
+
+            <!-- Nội dung Form theo từng Tab -->
+            <div class="p-6 overflow-y-auto flex-1 space-y-5">
+
+                <!-- TAB 1: ĐỊNH DANH & CỜ TRẠNG THÁI (IDENTITY & FLAGS) -->
+                <div v-if="activeModalTab === 'identity'" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Cột chọn Mã ID 6 chữ số từ Pool 100 số -->
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
+                                Mã ID (6 Chữ số) *
+                            </label>
+                            <select v-if="!isEditMode" v-model.number="formData.id"
+                                class="w-full border-2 border-[#8470FF] bg-blue-50/50 rounded-xl px-3 py-2.5 text-sm font-mono font-black text-blue-700 focus:outline-none">
+                                <option v-for="freeId in availablePoolIds" :key="freeId" :value="freeId">
+                                    #{{ freeId }} (Chưa dùng)
+                                </option>
+                            </select>
+                            <input v-else :value="`#${formData.id}`" disabled
+                                class="w-full border-2 border-[#8470FF] bg-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-mono font-black text-slate-500 cursor-not-allowed" />
+                        </div>
+
+                        <!-- Tên Asset Pack -->
+                        <div class="md:col-span-2">
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Tên Asset Pack
+                                (Title) *</label>
+                            <input v-model="formData.title" @input="autoFillSlug" type="text"
+                                placeholder="VD: Stylized Lowpoly Tree Pack"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500" />
+                        </div>
+
+                        <!-- Danh mục -->
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Danh mục
+                                (Category) *</label>
+                            <select v-model="formData.categoryId"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500">
+                                <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                    {{ cat.name }} ({{ cat.id }})
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Đường dẫn tĩnh
+                                (Slug)</label>
+                            <input v-model="formData.slug" type="text" placeholder="stylized-lowpoly-tree-pack"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-xs font-mono bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Nhà phát hành
+                                (Publisher)</label>
+                            <input v-model="formData.publisher" type="text"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Từ khóa (Tags - Ngăn
+                            cách bằng dấu phẩy)</label>
+                        <input v-model="tagsTextInput" type="text"
+                            placeholder="trees, foliage, nature, lowpoly, stylized"
+                            class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-blue-500" />
+                    </div>
+
+                    <!-- 3 Cờ Flags -->
+                    <div class="pt-3 border-t border-slate-100">
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Cờ Trạng thái &amp;
+                            Huy hiệu (Flags)</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <label class="flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer"
+                                :class="formData.flags.isFeatured ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'">
+                                <input type="checkbox" v-model="formData.flags.isFeatured"
+                                    class="w-4 h-4 accent-amber-500" />
+                                <div>
+                                    <p class="text-xs font-black text-slate-800">⭐ Featured Pack</p>
+                                    <p class="text-[10px] font-bold text-slate-400">Ưu tiên hiển thị nổi bật</p>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer"
+                                :class="formData.flags.isExclusive ? 'bg-purple-50 border-purple-300' : 'bg-slate-50 border-slate-200'">
+                                <input type="checkbox" v-model="formData.flags.isExclusive"
+                                    class="w-4 h-4 accent-purple-600" />
+                                <div>
+                                    <p class="text-xs font-black text-slate-800">💎 Exclusive</p>
+                                    <p class="text-[10px] font-bold text-slate-400">Độc quyền Cute Magic</p>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer"
+                                :class="formData.flags.isLaunchEdition ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'">
+                                <input type="checkbox" v-model="formData.flags.isLaunchEdition"
+                                    class="w-4 h-4 accent-blue-600" />
+                                <div>
+                                    <p class="text-xs font-black text-slate-800">🚀 Launch Edition</p>
+                                    <p class="text-[10px] font-bold text-slate-400">Phiên bản mới ra mắt</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: GIÁ BÁN & KHUYẾN MÃI (PRICING) -->
+                <div v-if="activeModalTab === 'pricing'" class="space-y-5">
+                    <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border-2 border-[#8470FF]">
+                        <div>
+                            <p class="text-xs font-black text-slate-800">Chế độ Miễn phí 100% (Free Starter Pack)</p>
+                            <p class="text-[11px] text-slate-500">Đặt giá về $0.00 và kích hoạt nút Download trực tiếp
+                            </p>
+                        </div>
+                        <button type="button" @click="setAsFreePack"
+                            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer">
+                            🎁 Đặt làm Pack Miễn phí ($0)
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Giá bán hiện tại
+                                ($) *</label>
+                            <input v-model.number="formData.pricing.price" type="number" step="0.5" min="0"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-black text-blue-600" />
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Giá gốc chưa
+                                giảm ($)</label>
+                            <input v-model.number="formData.pricing.originalPrice" @input="recalculateDiscountPrice"
+                                type="number" step="0.5" min="0" placeholder="Để trống nếu ko giảm"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">% Giảm giá
+                                (Discount)</label>
+                            <input v-model.number="formData.pricing.discount" @input="recalculateDiscountPrice"
+                                type="number" min="0" max="100" placeholder="VD: 50"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-600" />
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Thời hạn Sale
+                                (Ends In)</label>
+                            <input v-model="formData.pricing.discountEndsIn" type="text" placeholder="VD: 3 days left"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-xs font-bold" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: NỘI DUNG MÔ TẢ (CONTENT) -->
+                <div v-if="activeModalTab === 'content'" class="space-y-4">
+                    <div>
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Mô tả ngắn (Short
+                            Description - Hiển thị ở Card)</label>
+                        <input v-model="formData.content.shortDescription" type="text"
+                            class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-xs font-bold" />
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
+                            Mô tả chi tiết (Full Description - Mỗi đoạn văn 1 dòng)
+                        </label>
+                        <textarea v-model="fullDescriptionText" rows="4" placeholder="Nhập mỗi đoạn văn trên 1 dòng..."
+                            class="w-full border-2 border-[#8470FF] rounded-xl p-3.5 text-xs font-medium leading-relaxed"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
+                            Danh sách Tính năng nổi bật (Features - Mỗi gạch đầu dòng 1 dòng)
+                        </label>
+                        <textarea v-model="featuresText" rows="5"
+                            placeholder="65 mô hình thực vật đa dạng...&#10;Tối ưu hóa hoàn hảo cho Mobile & URP..."
+                            class="w-full border-2 border-[#8470FF] rounded-xl p-3.5 text-xs font-bold leading-relaxed"></textarea>
+                    </div>
+                </div>
+
+                <!-- TAB 4: HÌNH ẢNH & THÔNG SỐ 3D (MEDIA & TECH SPECS) -->
+                <div v-if="activeModalTab === 'media_tech'" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                        <div class="md:col-span-2 space-y-3">
+                            <div>
+                                <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Ảnh bìa chính
+                                    (Cover Image URL)</label>
+                                <input v-model="formData.media.cover" type="text"
+                                    class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2 text-xs font-mono" />
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Danh sách Ảnh
+                                    Gallery (Mỗi URL 1 dòng)</label>
+                                <textarea v-model="galleryText" rows="3"
+                                    class="w-full border-2 border-[#8470FF] rounded-xl p-3 text-xs font-mono"></textarea>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-2xl border-2 border-[#8470FF] text-center">
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Xem trước Cover</p>
+                            <img v-if="formData.media.cover" :src="formData.media.cover"
+                                class="w-full h-32 object-cover rounded-xl border" />
+                            <div v-else class="h-32 flex items-center justify-center text-xs text-slate-400">Chưa có ảnh
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Số lượng
+                                Pack</label>
+                            <input v-model.number="formData.techSpecs.packCount" type="number" min="1"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Tổng số 3D Models
+                                *</label>
+                            <input v-model.number="formData.techSpecs.modelCount" type="number" min="0"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black text-blue-600" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Polycount</label>
+                            <input v-model="formData.techSpecs.polycount" type="text" placeholder="800 - 2,500 tris"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Render
+                                Pipeline</label>
+                            <input v-model="formData.techSpecs.renderPipeline" type="text"
+                                placeholder="Unity URP & Blender 5"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Rigged (Gắn
+                                xương)</label>
+                            <input v-model="formData.techSpecs.rigged" type="text" placeholder="Yes (Humanoid)"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Animated (Hoạt
+                                ảnh)</label>
+                            <input v-model="formData.techSpecs.animated" type="text" placeholder="Yes / No"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Textures &amp;
+                                Materials</label>
+                            <input v-model="formData.techSpecs.textures" type="text"
+                                placeholder="1x 4K Color Atlas (.png)"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: LINKS CỬA HÀNG & FILE DOWNLOAD (LINKS & DOWNLOAD) -->
+                <div v-if="activeModalTab === 'links_download'" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Unity Asset Store
+                                URL</label>
+                            <input v-model="formData.links.unity" type="text"
+                                placeholder="https://assetstore.unity.com/..."
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-mono" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Fab URL</label>
+                            <input v-model="formData.links.fab" type="text" placeholder="https://www.fab.com/..."
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-mono" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Itch.io
+                                URL</label>
+                            <input v-model="formData.links.itch" type="text" placeholder="https://itch.io/..."
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-mono" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">CGTrader
+                                URL</label>
+                            <input v-model="formData.links.cgtrader" type="text"
+                                placeholder="https://www.cgtrader.com/..."
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-mono" />
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <p class="text-xs font-black text-slate-700 mb-3">📦 Cấu hình File Tải xuống Trực tiếp (Dành cho
+                            Pack Free)</p>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Đường dẫn File
+                                    (Download URL)</label>
+                                <input v-model="formData.download.url" type="text"
+                                    placeholder="/downloads/cmg-starter-free.zip"
+                                    class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-mono" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Dung lượng
+                                    (File Size)</label>
+                                <input v-model="formData.download.fileSize" type="text" placeholder="24.5 MB"
+                                    class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Phiên bản
+                                    (Version)</label>
+                                <input v-model="formData.download.version" type="text" placeholder="1.2.0"
+                                    class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: THỜI GIAN, ROADMAP & CHỈ SỐ (DATES, ROADMAP & METRICS) -->
+                <div v-if="activeModalTab === 'dates_roadmap'" class="space-y-5">
+                    <!-- Quản lý Ngày tháng -->
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Ngày phát hành đầu
+                                (Initial Release)</label>
+                            <input v-model="formData.dates.initialRelease" type="date"
+                                class="w-full bg-white border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black" />
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-[10px] font-black uppercase text-blue-600">Cập nhật gần nhất (Latest
+                                    Update)</label>
+                                <button type="button" @click="formData.dates.latestUpdate = getTodayDateString()"
+                                    class="text-[10px] font-black text-blue-600 underline cursor-pointer">Hôm
+                                    nay</button>
+                            </div>
+                            <input v-model="formData.dates.latestUpdate" type="date"
+                                class="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-black text-blue-600" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-amber-600 mb-1">Nhãn Sắp ra mắt
+                                (Available In)</label>
+                            <input v-model="formData.dates.availableIn" type="text"
+                                placeholder="Để trống nếu đã ra mắt (VD: 2 weeks)"
+                                class="w-full bg-white border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                    </div>
+
+                    <!-- Quản lý Tiến độ Roadmap -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl border-2 border-[#8470FF]">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Trạng thái
+                                Roadmap</label>
+                            <select v-model="formData.roadmap.status"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black">
+                                <option :value="null">Không hiển thị trên Roadmap</option>
+                                <option value="prev">✅ Tháng trước (Completed - prev)</option>
+                                <option value="current">⚡ Tháng này (In Progress - current)</option>
+                                <option value="next">📅 Tháng sau (Planned - next)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Tiến độ hoàn thành
+                                ({{ formData.roadmap.progress }}%)</label>
+                            <input v-model.number="formData.roadmap.progress" type="range" min="0" max="100" step="5"
+                                class="w-full accent-blue-600 mt-2" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Dự kiến bàn giao
+                                (Estimated)</label>
+                            <input v-model="formData.roadmap.estimatedDelivery" type="text"
+                                placeholder="VD: End of Nov 2026"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Ghi chú tiến độ
+                                (Roadmap Note)</label>
+                            <input v-model="formData.roadmap.note" type="text"
+                                placeholder="VD: Đang tối ưu thêm 10 mẫu cây mùa đông..."
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-bold" />
+                        </div>
+                    </div>
+
+                    <!-- Điều chỉnh số liệu Metrics -->
+                    <div class="grid grid-cols-3 gap-4 pt-2">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">❤️ Lượt Yêu thích
+                                (Likes)</label>
+                            <input v-model.number="formData.metrics.likes" type="number" min="0"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">👁️ Lượt Xem
+                                (Views)</label>
+                            <input v-model.number="formData.metrics.views" type="number" min="0"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">⬇️ Lượt Tải
+                                (Downloads)</label>
+                            <input v-model.number="formData.metrics.downloads" type="number" min="0"
+                                class="w-full border-2 border-[#8470FF] rounded-xl px-3 py-2 text-xs font-black" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t-2 border-[#1e1e1e] flex items-center justify-between shrink-0">
+                <span class="text-xs font-bold text-slate-400">
+                    Mọi thay đổi sẽ được lưu trực tiếp lên nhánh <code
+                        class="text-blue-600 font-mono">cmg_assets/pack_{{ formData.id || 'new' }}</code>
+                </span>
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="$emit('close')"
+                        class="px-4 py-2.5 rounded-xl border-2 border-[#8470FF] bg-white text-xs font-black text-slate-600 cursor-pointer">
+                        Hủy bỏ
+                    </button>
+                    <button type="button" @click="onSubmit" :disabled="isSaving"
+                        class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow-lg shadow-blue-600/25 cursor-pointer">
+                        {{ isSaving ? 'Đang lưu lên Firebase...' : '💾 Lưu Asset Pack' }}
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue'
+import { getTodayDateString } from '../../../../../stores/useAssetStore'
+import { CmgAssetModel } from '../../../../../models/cmg/Cmg_AssetModel'
+
+const props = defineProps({
+    show: { type: Boolean, default: false },
+    isEditMode: { type: Boolean, default: false },
+    initialData: { type: Object, default: () => ({}) },
+    categories: { type: Array, default: () => [] },
+    availablePoolIds: { type: Array, default: () => [] },
+    isSaving: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['close', 'save'])
+
+const activeModalTab = ref('identity')
+const formData = ref(JSON.parse(JSON.stringify(new CmgAssetModel())))
+
+// Các biến Text trung gian cho mảng (Tags, FullDescription, Features, Gallery) 
+const tagsTextInput = ref('')
+const fullDescriptionText = ref('')
+const featuresText = ref('')
+const galleryText = ref('')
+
+const modalTabs = [
+    { id: 'identity', icon: '🏷️', label: '1. Định danh & Cờ' },
+    { id: 'pricing', icon: '💲', label: '2. Giá & Khuyến mãi' },
+    { id: 'content', icon: '📝', label: '3. Nội dung & Tính năng' },
+    { id: 'media_tech', icon: '🎨', label: '4. Ảnh & Thông số 3D' },
+    { id: 'links_download', icon: '🔗', label: '5. Store Links & File' },
+    { id: 'dates_roadmap', icon: '📅', label: '6. Ngày, Roadmap & Chỉ số' }
+]
+
+// Mỗi khi mở Modal hoặc đổi dữ liệu truyền vào -> Reset về tab đầu và đồng bộ dữ liệu
+// watch(
+//     () => [props.show, props.initialData],
+//     ([isOpen, newData]) => {
+//         if (isOpen && newData) {
+//             activeModalTab.value = 'identity'
+//             formData.value = JSON.parse(JSON.stringify(newData))
+//             tagsTextInput.value = (formData.value.tags || []).join(', ')
+//             fullDescriptionText.value = (formData.value.content?.fullDescription || []).join('\n')
+//             featuresText.value = (formData.value.content?.features || []).join('\n')
+//             galleryText.value = (formData.value.media?.gallery || []).join('\n')
+//         }
+//     },
+//     { immediate: true, deep: true }
+// )
+watch(
+    () => [props.show, props.initialData, props.isEditMode],
+    ([isOpen]) => {
+        if (isOpen && props.initialData) {
+            activeModalTab.value = 'identity'
+            // Clone sâu dữ liệu để form biên tập độc lập với bảng bên ngoài
+            formData.value = JSON.parse(JSON.stringify(props.initialData))
+
+            // [BẢO VỆ]: Nếu đang ở chế độ Sửa mà ID bị thiếu, khôi phục lại ID từ dữ liệu gốc
+            if (props.isEditMode && (!formData.value.id || Number(formData.value.id) < 100000)) {
+                console.warn('[AssetEditorModal] Phát hiện thiếu ID khi sửa, đang khôi phục từ initialData...')
+                formData.value.id = props.initialData.id
+            }
+
+            tagsTextInput.value = (formData.value.tags || []).join(', ')
+            fullDescriptionText.value = (formData.value.content?.fullDescription || []).join('\n')
+            featuresText.value = (formData.value.content?.features || []).join('\n')
+            galleryText.value = (formData.value.media?.gallery || []).join('\n')
+        }
+    },
+    { immediate: true, deep: true }
+)
+
+const autoFillSlug = () => {
+    if (!props.isEditMode) {
+        formData.value.slug = (formData.value.title || '')
+            .toLowerCase()
+            .trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+    }
+}
+
+const recalculateDiscountPrice = () => {
+    const orig = Number(formData.value.pricing.originalPrice)
+    const disc = Number(formData.value.pricing.discount)
+    if (orig > 0 && disc > 0 && disc <= 100) {
+        formData.value.pricing.price = Number((orig * (1 - disc / 100)).toFixed(2))
+    }
+}
+
+const setAsFreePack = () => {
+    formData.value.pricing.price = 0
+    formData.value.pricing.originalPrice = null
+    formData.value.pricing.discount = null
+    formData.value.pricing.discountEndsIn = ''
+}
+
+// const onSubmit = () => {
+//     if (!formData.value.title?.trim()) {
+//         alert('Vui lòng nhập Tên Asset Pack!')
+//         return
+//     }
+
+//     // Gom các ô text trung gian về lại mảng chuẩn trước khi gửi lên Component Cha
+//     const payload = JSON.parse(JSON.stringify(formData.value))
+//     payload.tags = tagsTextInput.value.split(',').map(s => s.trim()).filter(Boolean)
+//     payload.content.fullDescription = fullDescriptionText.value.split('\n').map(s => s.trim()).filter(Boolean)
+//     payload.content.features = featuresText.value.split('\n').map(s => s.trim()).filter(Boolean)
+//     payload.media.gallery = galleryText.value.split('\n').map(s => s.trim()).filter(Boolean)
+
+//     emit('save', payload)
+// }
+const onSubmit = () => {
+    if (!formData.value.title?.trim()) {
+        alert('Vui lòng nhập Tên Asset Pack!')
+        return
+    }
+
+    // [BẢO VỆ TUYỆT ĐỐI]: Nếu đang ở chế độ Sửa (Edit) nhưng ID bị mất, tuyệt đối không cho lưu thành bản mới
+    if (props.isEditMode && (!formData.value.id || Number(formData.value.id) < 100000)) {
+        alert('Lỗi: Không tìm thấy mã ID gốc của Asset Pack này. Vui lòng đóng modal và mở lại!')
+        return
+    }
+
+    // Gom các ô text trung gian về lại mảng chuẩn trước khi gửi lên Component Cha
+    const payload = JSON.parse(JSON.stringify(formData.value))
+    payload.tags = tagsTextInput.value.split(',').map(s => s.trim()).filter(Boolean)
+    payload.content.fullDescription = fullDescriptionText.value.split('\n').map(s => s.trim()).filter(Boolean)
+    payload.content.features = featuresText.value.split('\n').map(s => s.trim()).filter(Boolean)
+    payload.media.gallery = galleryText.value.split('\n').map(s => s.trim()).filter(Boolean)
+
+    // Nếu là Sửa, ép chặt lại ID để đảm bảo không bao giờ bị đổi sang ID khác
+    if (props.isEditMode) {
+        payload.id = Number(props.initialData.id)
+    }
+
+    emit('save', payload) 
+}
+</script>

@@ -1,0 +1,555 @@
+<!-- src/components/admin/tabs/user_tracker/VisitorLogs.vue -->
+<template>
+  <div class="space-y-6 font-sans text-slate-900">
+    
+    <!-- HEADER & NÚT DỌN DẸP DỮ LIỆU 30 NGÀY -->
+    <div :class="[theme.ui.adminRoundedContainer, 'flex flex-col lg:flex-row lg:items-center justify-between gap-4']">
+    <!-- <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm"> -->
+      
+     <div>
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+          <h1 class="text-2xl font-black text-slate-800 tracking-tight">Phân tích Hành vi Người dùng</h1>
+        </div>
+        <p class="text-xs text-slate-500 font-medium mt-1">
+          Định danh duy nhất theo Địa chỉ IP • Lưu trữ tối ưu trong chu kỳ 30 ngày gần nhất
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Nút Xóa dữ liệu cũ > 30 ngày -->
+        <button 
+          @click="handleCleanupOldData"
+          :disabled="isCleaning"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all border cursor-pointer"
+          :class="expiredCount > 0 
+            ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-600 hover:text-white shadow-sm' 
+            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'"
+        >
+          <span>🧹</span>
+          <span v-if="isCleaning">Đang dọn dẹp...</span>
+          <span v-else>
+            Dọn data &gt; 30 ngày 
+            <strong v-if="expiredCount > 0" class="ml-1 px-1.5 py-0.5 bg-rose-600 text-white rounded-md text-[10px]">
+              {{ expiredCount }}
+            </strong>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 5 THẺ KPI THỐNG KÊ QUAN TRỌNG -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div :class="[theme.ui.adminRoundedContainer]">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Unique Visitors (IP)</p>
+        <p class="text-2xl font-black text-blue-600 mt-1">{{ visitorsList.length }}</p>
+        <p class="text-[11px] text-slate-400 font-medium mt-1">Trong 30 ngày qua</p>
+      </div>
+
+      <div :class="[theme.ui.adminRoundedContainer]">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Truy cập Hôm nay</p>
+        <p class="text-2xl font-black text-emerald-500 mt-1">{{ activeTodayCount }}</p>
+        <p class="text-[11px] text-slate-400 font-medium mt-1">IP hoạt động hôm nay</p>
+      </div>
+
+      <div :class="[theme.ui.adminRoundedContainer]">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lượt xem Asset Pack</p>
+        <p class="text-2xl font-black text-indigo-600 mt-1">{{ totalAssetViewsAll }}</p>
+        <p class="text-[11px] text-slate-400 font-medium mt-1">Tổng số lần mở Pack</p>
+      </div>
+
+      <div :class="[theme.ui.adminRoundedContainer]">
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Download Hôm nay</p>
+        <p class="text-2xl font-black text-amber-500 mt-1">{{ downloadsTodayAll }}</p>
+        <p class="text-[11px] text-slate-400 font-medium mt-1">Ngày {{ todayKey }}</p>
+      </div>
+
+      <div :class="[theme.ui.adminRoundedContainer, 'col-span-2 md:col-span-1']" >
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng lượt Download</p>
+        <p class="text-2xl font-black text-rose-600 mt-1">{{ totalDownloadsAll }}</p>
+        <p class="text-[11px] text-slate-400 font-medium mt-1">Tất cả người dùng</p>
+      </div>
+    </div>
+
+    <!-- THANH CHUYỂN CHẾ ĐỘ XEM & BỘ LỌC -->
+    <!-- <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm space-y-4"> -->
+    <div :class="[theme.ui.adminRoundedContainer, 'space-y-4']">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <!-- Chuyển đổi giữa Hồ sơ IP duy nhất và Luồng sự kiện -->
+        <div class="flex bg-slate-100 p-1 rounded-2xl w-fit">
+          <button 
+            @click="viewMode = 'visitors'; currentPage = 1"
+            :class="viewMode === 'visitors' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+            class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer"
+          >
+            👤 Hồ sơ Người dùng Duy nhất ({{ visitorsList.length }})
+          </button>
+          <button 
+            @click="viewMode = 'events'; currentPage = 1"
+            :class="viewMode === 'events' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+            class="px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer"
+          >
+            ⚡ Luồng Sự kiện Chi tiết ({{ eventsList.length }})
+          </button>
+        </div>
+
+        <!-- Bộ lọc sắp xếp nhanh cho bảng Visitors -->
+        <div v-if="viewMode === 'visitors'" class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-400">Ưu tiên xếp theo:</span>
+          <select v-model="sortBy" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-slate-700 focus:outline-none">
+            <option value="lastActive">Mới truy cập gần nhất</option>
+            <option value="downloadsToday">Download nhiều nhất hôm nay</option>
+            <option value="totalDownloads">Tổng Download cao nhất</option>
+            <option value="assetViews">Xem nhiều Asset Pack nhất</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ô tìm kiếm & Lọc Quốc gia / Nhà mạng -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="md:col-span-2 relative">
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Tìm theo Địa chỉ IP, Thành phố, Trang truy cập hoặc Tên Pack..." 
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          />
+          <span class="absolute right-4 top-2.5 opacity-30">🔍</span>
+        </div>
+
+        <select v-model="filterCountry" class="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none">
+          <option value="">🌍 Tất cả Quốc gia ({{ uniqueCountries.length }})</option>
+          <option v-for="c in uniqueCountries" :key="c" :value="c">{{ c }}</option>
+        </select>
+
+        <select v-model="filterISP" class="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none">
+          <option value="">📡 Tất cả Nhà mạng ({{ uniqueISPs.length }})</option>
+          <option v-for="i in uniqueISPs" :key="i" :value="i">{{ i }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- BẢNG 1: DANH SÁCH NGƯỜI DÙNG DUY NHẤT THEO ĐỊA CHỈ IP -->
+    <!-- ===================================================== -->
+    <div v-if="viewMode === 'visitors'"
+    :class="[theme.ui.adminRoundedContainer, 'overflow-hidden']">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50/80 border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              <th class="p-4">Người dùng (IP & Vị trí)</th>
+              <th class="p-4">Thiết bị & Mạng</th>
+              <th class="p-4 text-center">Trang đã vào</th>
+              <th class="p-4 text-center">Pack đã xem</th>
+              <th class="p-4 text-center">Download (Hôm nay / Tổng)</th>
+              <th class="p-4 text-right">Hoạt động cuối</th>
+              <th class="p-4 text-right">Hành trình</th>
+            </tr>
+          </thead>
+
+          <tbody v-if="paginatedItems.length > 0">
+            <tr v-for="v in paginatedItems" :key="v.visitorKey" class="border-b border-slate-50 hover:bg-blue-50/30 transition-all">
+              <!-- Cột 1: Quốc gia, Thành phố & IP -->
+              <td class="p-4">
+                <div class="flex items-center gap-3">
+                  <img v-if="v.flag" :src="v.flag" class="w-6 h-4 object-cover rounded shadow-sm border border-slate-200" referrerpolicy="no-referrer" />
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs font-black text-slate-800">{{ v.country || 'Unknown' }}</span>
+                      <span class="text-[11px] text-slate-400 font-semibold">• {{ v.city }}</span>
+                    </div>
+                    <code class="text-[11px] font-mono font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">
+                      {{ v.ip }}
+                    </code>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Cột 2: Thiết bị & Nhà mạng -->
+              <td class="p-4">
+                <span :class="getISPStyle(v.isp)" class="px-2 py-0.5 rounded-md text-[10px] font-black border uppercase inline-block mb-1">
+                  {{ v.isp || 'N/A' }}
+                </span>
+                <p class="text-[11px] font-bold text-slate-500">
+                  {{ v.device === 'Mobile' ? '📱 Mobile' : '💻 Desktop' }} • {{ v.browser }}
+                </p>
+              </td>
+
+              <!-- Cột 3: Số trang đã truy cập -->
+              <td class="p-4 text-center">
+                <span class="text-sm font-black text-slate-800">{{ v.totalPageViews || 1 }}</span>
+                <p class="text-[10px] font-bold text-slate-400 truncate max-w-[140px] mx-auto" :title="v.lastPath">
+                  Đang ở: {{ v.lastPath || '/' }}
+                </p>
+              </td>
+
+              <!-- Cột 4: Số Asset Pack đã xem -->
+              <td class="p-4 text-center">
+                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 text-indigo-700 font-black text-xs">
+                  <span>📦 {{ v.uniqueAssetsViewedCount || 0 }} packs</span>
+                  <span class="text-[10px] opacity-70">({{ v.totalAssetViews || 0 }} lượt)</span>
+                </div>
+              </td>
+
+              <!-- Cột 5: Download Hôm nay / Tổng Download -->
+              <td class="p-4 text-center">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-xl border"
+                     :class="(v.totalDownloads || 0) > 0 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-100 text-slate-400'">
+                  <div class="text-left">
+                    <span class="text-xs font-black">Hôm nay: {{ getVisitorDownloadsToday(v) }}</span>
+                    <span class="mx-1.5 opacity-30">|</span>
+                    <span class="text-xs font-black">Tổng: {{ v.totalDownloads || 0 }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Cột 6: Thời gian truy cập -->
+              <td class="p-4 text-right">
+                <p class="text-xs font-black text-slate-800">{{ formatTimeAgo(v.lastActive) }}</p>
+                <p class="text-[10px] font-bold text-slate-400">{{ formatExactTime(v.lastActive) }}</p>
+              </td>
+
+              <!-- Cột 7: Nút mở Modal xem chi tiết các trang & pack họ đã bấm -->
+              <td class="p-4 text-right">
+                <button 
+                  @click="selectedVisitor = v"
+                  class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-[11px] font-black transition-colors cursor-pointer"
+                >
+                  Chi tiết →
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="7" class="p-16 text-center text-slate-400 font-bold">
+                Chưa có dữ liệu người dùng khớp với bộ lọc...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- BẢNG 2: LUỒNG SỰ KIỆN CHI TIẾT (EVENT STREAM)         -->
+    <!-- ===================================================== -->
+    <div v-else class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50/80 border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              <th class="p-4">Hành động</th>
+              <th class="p-4">Người thực hiện (IP & Quốc gia)</th>
+              <th class="p-4">Trang / Asset Pack tương tác</th>
+              <th class="p-4 text-right">Thời gian</th>
+            </tr>
+          </thead>
+          <tbody v-if="paginatedItems.length > 0">
+            <tr v-for="ev in paginatedItems" :key="ev.id" class="border-b border-slate-50 hover:bg-slate-50/80">
+              <td class="p-4">
+                <span v-if="ev.actionType === 'DOWNLOAD_ASSET'" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase">
+                  ⬇️ Tải xuống Pack
+                </span>
+                <span v-else-if="ev.actionType === 'VIEW_ASSET'" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase">
+                  👁️ Xem chi tiết Pack
+                </span>
+                <span v-else class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black uppercase">
+                  🌐 Chuyển trang
+                </span>
+              </td>
+              <td class="p-4">
+                <div class="flex items-center gap-2">
+                  <img v-if="ev.flag" :src="ev.flag" class="w-5 h-3.5 rounded-sm border" referrerpolicy="no-referrer" />
+                  <code class="text-xs font-mono font-bold text-slate-800">{{ ev.ip }}</code>
+                  <span class="text-xs text-slate-400">({{ ev.city }}, {{ ev.country }})</span>
+                </div>
+              </td>
+              <td class="p-4">
+                <p v-if="ev.assetTitle" class="text-xs font-black text-blue-600">📦 {{ ev.assetTitle }}</p>
+                <p class="text-[11px] font-mono text-slate-500">{{ ev.path }}</p>
+              </td>
+              <td class="p-4 text-right">
+                <p class="text-xs font-black text-slate-700">{{ formatTimeAgo(ev.timestamp) }}</p>
+                <p class="text-[10px] text-slate-400 font-bold">{{ formatExactTime(ev.timestamp) }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- THANH PHÂN TRANG DÙNG CHUNG -->
+    <div class="p-4 bg-white rounded-3xl border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-[11px] font-black uppercase text-slate-400 tracking-widest">
+        Hiển thị {{ startIndex + 1 }}–{{ endIndex }} trên tổng {{ activeFilteredList.length }} bản ghi
+      </p>
+      <div class="flex items-center gap-1.5">
+        <button @click="currentPage = 1" :disabled="currentPage === 1" class="px-3 py-1.5 rounded-xl border text-xs font-black disabled:opacity-30">«</button>
+        <button @click="currentPage--" :disabled="currentPage === 1" class="px-3 py-1.5 rounded-xl border text-xs font-black disabled:opacity-30">Trước</button>
+        <span class="px-4 py-1.5 rounded-xl bg-blue-50 text-blue-600 text-xs font-black">{{ currentPage }} / {{ totalPages }}</span>
+        <button @click="currentPage++" :disabled="currentPage === totalPages" class="px-3 py-1.5 rounded-xl border text-xs font-black disabled:opacity-30">Sau</button>
+        <button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="px-3 py-1.5 rounded-xl border text-xs font-black disabled:opacity-30">»</button>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- MODAL CHI TIẾT HÀNH TRÌNH CỦA 1 ĐỊA CHỈ IP            -->
+    <!-- ===================================================== -->
+    <div v-if="selectedVisitor" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" @click.self="selectedVisitor = null">
+      <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl space-y-6">
+        <div class="flex items-start justify-between border-b border-slate-100 pb-4">
+          <div class="flex items-center gap-3">
+            <img v-if="selectedVisitor.flag" :src="selectedVisitor.flag" class="w-8 h-6 rounded border" />
+            <div>
+              <h3 class="text-lg font-black text-slate-800">Hồ sơ IP: {{ selectedVisitor.ip }}</h3>
+              <p class="text-xs font-bold text-slate-400">
+                {{ selectedVisitor.city }}, {{ selectedVisitor.country }} • Mạng: {{ selectedVisitor.isp }}
+              </p>
+            </div>
+          </div>
+          <button @click="selectedVisitor = null" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 font-black text-sm cursor-pointer">✕</button>
+        </div>
+
+        <!-- Tóm tắt nhanh trong Modal -->
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-slate-50 p-3 rounded-2xl">
+            <p class="text-[10px] font-black uppercase text-slate-400">Tổng số trang đã vào</p>
+            <p class="text-xl font-black text-slate-800">{{ selectedVisitor.totalPageViews || 1 }}</p>
+          </div>
+          <div class="bg-indigo-50 p-3 rounded-2xl">
+            <p class="text-[10px] font-black uppercase text-indigo-400">Asset Pack đã xem</p>
+            <p class="text-xl font-black text-indigo-600">{{ selectedVisitor.uniqueAssetsViewedCount || 0 }}</p>
+          </div>
+          <div class="bg-emerald-50 p-3 rounded-2xl">
+            <p class="text-[10px] font-black uppercase text-emerald-500">Download (Nay / Tổng)</p>
+            <p class="text-xl font-black text-emerald-600">
+              {{ getVisitorDownloadsToday(selectedVisitor) }} / {{ selectedVisitor.totalDownloads || 0 }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Danh sách các Asset Pack người này đã xem -->
+        <div>
+          <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">📦 Các Asset Pack đã xem ({{ (selectedVisitor.viewedAssets || []).length }})</h4>
+          <div v-if="selectedVisitor.viewedAssets?.length" class="flex flex-wrap gap-2">
+            <span v-for="pack in selectedVisitor.viewedAssets" :key="pack" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold">
+              {{ pack }}
+            </span>
+          </div>
+          <p v-else class="text-xs text-slate-400 italic">Chưa mở xem chi tiết Asset Pack nào.</p>
+        </div>
+
+        <!-- Danh sách các Asset Pack người này đã tải xuống -->
+        <div>
+          <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">⬇️ Các Asset Pack đã Download ({{ (selectedVisitor.downloadedAssets || []).length }})</h4>
+          <div v-if="selectedVisitor.downloadedAssets?.length" class="flex flex-wrap gap-2">
+            <span v-for="dl in selectedVisitor.downloadedAssets" :key="dl" class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold">
+              {{ dl }}
+            </span>
+          </div>
+          <p v-else class="text-xs text-slate-400 italic">Chưa thực hiện lượt tải xuống nào.</p>
+        </div>
+
+        <!-- Danh sách các Đường dẫn URL người này đã đi qua -->
+        <div>
+          <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">🧭 Các trang đã truy cập ({{ (selectedVisitor.visitedPages || []).length }})</h4>
+          <div class="bg-slate-900 text-slate-200 p-4 rounded-2xl font-mono text-xs space-y-1 max-h-40 overflow-y-auto">
+            <div v-for="(page, idx) in selectedVisitor.visitedPages" :key="idx" class="flex items-center gap-2">
+              <span class="text-slate-500">{{ idx + 1 }}.</span>
+              <span class="text-emerald-400">{{ page }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { db } from '../../../../firebase'
+import { ref as dbRef, onValue } from 'firebase/database'
+import { getTodayKey, purgeOldAnalyticsData } from '../../../../services/trackerService'
+
+import { useThemeStore } from '../../../../stores/useThemeStore.js'
+const theme = useThemeStore()
+
+const visitorsList = ref([])
+const eventsList = ref([])
+const viewMode = ref('visitors') // 'visitors' | 'events'
+const selectedVisitor = ref(null)
+const isCleaning = ref(false)
+
+// Bộ lọc & Phân trang
+const searchQuery = ref('')
+const filterCountry = ref('')
+const filterISP = ref('')
+const sortBy = ref('lastActive')
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const todayKey = getTodayKey()
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+
+onMounted(() => {
+  // 1. Lắng nghe bảng Hồ sơ Người dùng Duy nhất (Theo IP)
+  onValue(dbRef(db, 'analytics/visitors'), (snapshot) => {
+    const data = snapshot.val()
+    if (!data) {
+      visitorsList.value = []
+      return
+    }
+    visitorsList.value = Object.keys(data).map(key => ({
+      visitorKey: key,
+      ...data[key]
+    }))
+  })
+
+  // 2. Lắng nghe bảng Sự kiện chi tiết (Giới hạn hiển thị mới nhất lên đầu)
+  onValue(dbRef(db, 'analytics/events'), (snapshot) => {
+    const data = snapshot.val()
+    if (!data) {
+      eventsList.value = []
+      return
+    }
+    eventsList.value = Object.keys(data).map(key => ({
+      id: key,
+      ...data[key]
+    })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+  })
+})
+
+// Lấy số lượt download trong ngày hôm nay của 1 Visitor
+const getVisitorDownloadsToday = (visitor) => {
+  if (!visitor?.downloadsByDate) return 0
+  return visitor.downloadsByDate[todayKey] || 0
+}
+
+// ==========================================
+// CÁC CHỈ SỐ THỐNG KÊ TỔNG QUAN (KPIs)
+// ==========================================
+const activeTodayCount = computed(() => {
+  const todayStr = new Date().toDateString()
+  return visitorsList.value.filter(v => new Date(v.lastActive).toDateString() === todayStr).length
+})
+
+const totalAssetViewsAll = computed(() => {
+  return visitorsList.value.reduce((sum, v) => sum + (v.totalAssetViews || 0), 0)
+})
+
+const downloadsTodayAll = computed(() => {
+  return visitorsList.value.reduce((sum, v) => sum + getVisitorDownloadsToday(v), 0)
+})
+
+const totalDownloadsAll = computed(() => {
+  return visitorsList.value.reduce((sum, v) => sum + (v.totalDownloads || 0), 0)
+})
+
+// Đếm số lượng bản ghi đã quá hạn 30 ngày cần dọn dẹp
+const expiredCount = computed(() => {
+  const cutoff = Date.now() - THIRTY_DAYS_MS
+  const oldVisitors = visitorsList.value.filter(v => (v.lastActive || 0) < cutoff).length
+  const oldEvents = eventsList.value.filter(e => (e.timestamp || 0) < cutoff).length
+  return oldVisitors + oldEvents
+})
+
+// Xử lý nút bấm Dọn dẹp dữ liệu > 30 ngày
+const handleCleanupOldData = async () => {
+  if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu theo dõi người dùng cũ hơn 30 ngày trước để giải phóng Firebase không?')) return
+  
+  isCleaning.value = true
+  const result = await purgeOldAnalyticsData(30)
+  isCleaning.value = false
+
+  if (result.success) {
+    alert(`Đã dọn dẹp thành công:\n- ${result.deletedVisitorsCount} hồ sơ IP quá hạn 30 ngày\n- ${result.deletedEventsCount} nhật ký sự kiện cũ.`)
+  } else {
+    alert('Có lỗi xảy ra khi dọn dẹp: ' + result.error)
+  }
+}
+
+// ==========================================
+// LỌC, SẮP XẾP & PHÂN TRANG
+// ==========================================
+const uniqueCountries = computed(() => [...new Set(visitorsList.value.map(v => v.country).filter(Boolean))].sort())
+const uniqueISPs = computed(() => [...new Set(visitorsList.value.map(v => v.isp).filter(Boolean))].sort())
+
+const filteredVisitors = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  return visitorsList.value
+    .filter(v => {
+      const matchSearch = !q || 
+        (v.ip || '').toLowerCase().includes(q) ||
+        (v.city || '').toLowerCase().includes(q) ||
+        (v.visitedPages || []).some(p => p.toLowerCase().includes(q)) ||
+        (v.viewedAssets || []).some(a => a.toLowerCase().includes(q))
+      const matchCountry = !filterCountry.value || v.country === filterCountry.value
+      const matchISP = !filterISP.value || v.isp === filterISP.value
+      return matchSearch && matchCountry && matchISP
+    })
+    .sort((a, b) => {
+      if (sortBy.value === 'downloadsToday') return getVisitorDownloadsToday(b) - getVisitorDownloadsToday(a)
+      if (sortBy.value === 'totalDownloads') return (b.totalDownloads || 0) - (a.totalDownloads || 0)
+      if (sortBy.value === 'assetViews') return (b.uniqueAssetsViewedCount || 0) - (a.uniqueAssetsViewedCount || 0)
+      return (b.lastActive || 0) - (a.lastActive || 0)
+    })
+})
+
+const filteredEvents = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  return eventsList.value.filter(e => {
+    const matchSearch = !q ||
+      (e.ip || '').toLowerCase().includes(q) ||
+      (e.path || '').toLowerCase().includes(q) ||
+      (e.assetTitle || '').toLowerCase().includes(q)
+    const matchCountry = !filterCountry.value || e.country === filterCountry.value
+    const matchISP = !filterISP.value || e.isp === filterISP.value
+    return matchSearch && matchCountry && matchISP
+  })
+})
+
+const activeFilteredList = computed(() => viewMode.value === 'visitors' ? filteredVisitors.value : filteredEvents.value)
+const totalPages = computed(() => Math.ceil(activeFilteredList.value.length / itemsPerPage) || 1)
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
+const endIndex = computed(() => Math.min(startIndex.value + itemsPerPage, activeFilteredList.value.length))
+const paginatedItems = computed(() => activeFilteredList.value.slice(startIndex.value, startIndex.value + itemsPerPage))
+
+watch([searchQuery, filterCountry, filterISP, sortBy], () => {
+  currentPage.value = 1
+})
+
+const getISPStyle = (isp) => {
+  if (!isp) return 'bg-slate-50 text-slate-400 border-slate-100'
+  const name = isp.toLowerCase()
+  if (name.includes('viettel')) return 'bg-red-50 text-red-600 border-red-200'
+  if (name.includes('fpt')) return 'bg-orange-50 text-orange-600 border-orange-200'
+  if (name.includes('vnpt')) return 'bg-blue-50 text-blue-600 border-blue-200'
+  return 'bg-slate-50 text-slate-600 border-slate-200'
+}
+
+const formatTimeAgo = (timestamp) => {
+  if (!timestamp) return 'N/A'
+  const diff = Date.now() - timestamp
+  if (diff < 60000) return 'Vừa xong'
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins} phút trước`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} giờ trước`
+  const days = Math.floor(hours / 24)
+  return `${days} ngày trước`
+}
+
+const formatExactTime = (timestamp) => {
+  if (!timestamp) return ''
+  return new Date(timestamp).toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+</script>

@@ -101,6 +101,8 @@ import { ref } from 'vue'
 import { computed } from 'vue'
 import { useAssetStore } from '../../../../../stores/useAssetStore.js'
 
+import { trackUserBehavior } from '../../../../../services/trackerService.js'
+
 import DownloadDonateModal from '../../../../modals/DownloadDonateModal.vue'
 
 const props = defineProps({
@@ -165,6 +167,26 @@ const openLink = (url) => {
     if (url && url.trim() !== '') {
         window.open(url, '_blank')
     }
+}
+
+const handleDownloadClick = (asset) => {
+  if (!asset?.id) return
+
+  // 1. Cộng +1 vào metrics.downloads của Pack trên nhánh 'cmg_assets'
+  assetStore.recordAssetDownload(asset.id)
+
+  // 2. Ghi nhận hành vi tải xuống theo IP của người dùng vào nhánh 'analytics'
+  trackUserBehavior('DOWNLOAD_ASSET', {
+    path: window.location.pathname,
+    assetId: asset.id,
+    assetTitle: asset.title,
+    user: visitorStore.user
+  })
+
+  // 3. Mở link tải file (nếu bạn dùng thẻ <button> thay vì thẻ <a>)
+  if (asset.download?.url) {
+    window.open(asset.download.url, '_blank')
+  }
 }
 </script>
 

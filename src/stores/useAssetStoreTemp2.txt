@@ -1,0 +1,347 @@
+// src/stores/useAssetStore.js
+import { defineStore } from 'pinia'
+import { db } from '../firebase'
+import { ref as dbRef, onValue, set, update, remove, get } from 'firebase/database'
+
+import { mockAssets } from '../data/assets/cmg/cmg_assets'
+import { mockCategories } from '../data/assets/cmg/cmg_categories'
+import { CmgAssetModel } from '../models/cmg/Cmg_AssetModel' // Kiểm tra lại đường dẫn file CmgAssetModel của bạn
+
+// 1. Thêm import này ở đầu file src/stores/useAssetStore.js:
+import { 
+  CMG_ASSET_ID_POOL, 
+  getNextUnusedAssetId, 
+  getAvailableAssetIds, 
+  getIdPoolStats 
+} from '../data/assets/cmg/cmg_id_pool'
+
+const RECENTLY_VIEWED_KEY = 'cmg_recently_viewed_ids'
+const FAVORITE_ASSETS_KEY = 'cmg_favorite_ids'
+const MAX_RECENT_ITEMS = 20
+const MAX_FAVORITE_ITEMS = 50
+const DISPLAY_LIMIT = 12
+const FIREBASE_ASSETS_PATH = 'cmg_assets'
+
+const loadIdsFromStorage = (storageKey) => {
+  try {
+    const rawData = localStorage.getItem(storageKey)
+    if (!rawData) return []
+    const parsed = JSON.parse(rawData)
+    return Array.isArray(parsed) ? parsed.map(Number).filter(id => !isNaN(id) && id > 0) : []
+  } catch (error) {
+    return []
+  }
+}
+
+const saveIdsToStorage = (storageKey, ids) => {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(ids))
+  } catch (error) {
+    console.warn(`[CuteMagic] Không thể lưu (${storageKey}):`, error)
+  }
+}
+
+// Helper lấy ngày hôm nay định dạng chuẩn YYYY-MM-DD
+export const getTodayDateString = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export const useAssetStore = defineStore('assetStore', {
+  state: () => ({
+    categories: mockCategories,
+    // Khởi tạo sẵn bằng mockAssets để web không bị trắng trang khi đang tải Firebase
+    assets: mockAssets,
+    isFirebaseSynced: false,
+    isLoadingFirebase: false,
+    recentlyViewedIds: loadIdsFromStorage(RECENTLY_VIEWED_KEY),
+    favoriteIds: loadIdsFromStorage(FAVORITE_ASSETS_KEY)
+  }),
+
+  getters: {
+    getAllAssets: (state) => state.assets,
+
+    getAssetBySlug: (state) => {
+      return (slug) => state.assets.find(asset => asset.slug === slug)
+    },
+    getAssetById: (state) => {
+      return (id) => state.assets.find(asset => Number(asset.id) === Number(id))
+    },
+
+    getAssetsByCategory: (state) => {
+      return (categoryId) => {
+        if (!categoryId || categoryId === 'all') return state.assets
+        return state.assets.filter(asset => asset.categoryId === categoryId)
+      }
+    },
+
+    // Lấy 4 sản phẩm mới ra mắt hoặc mới cập nhật gần nhất
+    getLatestAssets: (state) => {
+      return [...state.assets]
+        .filter(asset => !asset.dates.availableIn)
+        .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
+        .slice(0, 4)
+    },
+
+    getStatistics: (state) => {
+      const totalPacks = state.assets.reduce((sum, asset) => sum + (asset.techSpecs?.packCount || 0), 0)
+      const totalModels = state.assets.reduce((sum, asset) => sum + (asset.techSpecs?.modelCount || 0), 0)
+      const totalCategories = state.categories.filter(c => c.id !== 'all').length
+
+      return {
+        packs: totalPacks,
+        models: totalModels,
+        categories: totalCategories
+      }
+    },
+
+    hasRecentlyViewed() {
+      return this.getRecentlyViewedAssets.length > 0
+    },
+
+    getRecentlyViewedAssets: (state) => {
+      if (!state.recentlyViewedIds?.length) return []
+      const assetMap = new Map(state.assets.map(asset => [Number(asset.id), asset]))
+      return state.recentlyViewedIds
+        .map(id => assetMap.get(Number(id)))
+        .filter(Boolean)
+        .slice(0, DISPLAY_LIMIT)
+    },
+
+    hasFavorites() {
+      return this.getFavoriteAssets.length > 0
+    },
+
+    isFavorite: (state) => {
+      const favSet = new Set(state.favoriteIds.map(Number))
+      return (assetId) => favSet.has(Number(assetId))
+    },
+
+    getFavoriteAssets: (state) => {
+      if (!state.favoriteIds?.length) return []
+      const assetMap = new Map(state.assets.map(asset => [Number(asset.id), asset]))
+      return state.favoriteIds
+        .map(id => assetMap.get(Number(id)))
+        .filter(Boolean)
+    },
+
+    // 1. New Releases: Ưu tiên xếp theo latestUpdate (hoặc initialRelease) để khi Admin bấm "Vừa cập nhật" là nhảy lên đầu!
+    newAssets: (state) => {
+      return [...state.assets]
+        .filter(asset => !asset.dates.availableIn)
+        .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
+    },
+
+    // 2. Top Rated
+    topAssets: (state) => {
+      return [...state.assets]
+        .filter(asset => !asset.dates.availableIn)
+        .sort((a, b) => {
+          const likeDiff = (b.metrics?.likes || 0) - (a.metrics?.likes || 0)
+          if (likeDiff !== 0) return likeDiff
+          return (b.metrics?.downloads || 0) - (a.metrics?.downloads || 0)
+        })
+    },
+
+    // 3. Coming Soon
+    upcomingAssets: (state) => {
+      return [...state.assets]
+        .filter(asset => Boolean(asset.dates?.availableIn) || asset.roadmap?.status === 'next')
+        .sort((a, b) => new Date(a.dates.initialRelease) - new Date(b.dates.initialRelease))
+    },
+
+    roadmapAssets: (state) => state.assets.filter(asset => asset.isInRoadmap),
+
+    roadmapByStatus: (state) => ({
+      prev: state.assets.filter(asset => asset.roadmap?.status === 'prev'),
+      current: state.assets.filter(asset => asset.roadmap?.status === 'current'),
+      next: state.assets.filter(asset => asset.roadmap?.status === 'next')
+    }),
+
+    // Lấy thống kê kho 100 mã ID 6 chữ số
+    idPoolStats: (state) => getIdPoolStats(state.assets),
+
+    // Lấy danh sách các mã ID 6 chữ số còn trống chưa có Pack nào dùng
+    availablePoolIds: (state) => getAvailableAssetIds(state.assets),
+  },
+
+  actions: {
+    // ========================================================
+    // NHÓM ACTIONS 1: ĐỒNG BỘ FIREBASE & QUẢN TRỊ ADMIN (CRUD)
+    // ========================================================
+
+    /**
+     * Khởi tạo lắng nghe thời gian thực từ nhánh 'cmg_assets' trên Firebase.
+     * Nếu Firebase đang trống (lần đầu tiên chạy), tự động đẩy 30 gói mockAssets lên Firebase!
+     */
+    initFirebaseAssetsSync() {
+      if (this.isFirebaseSynced) return
+      this.isLoadingFirebase = true
+
+      const assetsRef = dbRef(db, FIREBASE_ASSETS_PATH)
+
+      onValue(assetsRef, async (snapshot) => {
+        const data = snapshot.val()
+
+        if (!data) {
+          // Nếu nhánh cmg_assets trên Firebase chưa có gì -> Tự động Seed 30 gói mẫu lên!
+          await this.seedMockAssetsToFirebase()
+          this.isLoadingFirebase = false
+          this.isFirebaseSynced = true
+          return
+        }
+
+        // Chuyển đổi dữ liệu thô từ Firebase về lại mảng các instance của CmgAssetModel
+        const list = Object.values(data)
+          .filter(Boolean)
+          .map(rawItem => new CmgAssetModel(rawItem))
+          .sort((a, b) => Number(a.id) - Number(b.id))
+
+        this.assets = list
+        this.isFirebaseSynced = true
+        this.isLoadingFirebase = false
+      })
+    },
+
+    /**
+     * Đẩy 30 gói từ mockAssets (JS) lên Firebase.
+     * Tự động gán 30 mã ID 6 chữ số đầu tiên trong CMG_ASSET_ID_POOL nếu ID cũ đang là số nhỏ (1 -> 30).
+     */
+    async seedMockAssetsToFirebase() {
+      const payload = {}
+      mockAssets.forEach((item, index) => {
+        const rawCopy = JSON.parse(JSON.stringify(item))
+        
+        // Nếu ID hiện tại nhỏ hơn 100000 (VD: 1, 2, 3...), tự động ánh xạ sang ID 6 chữ số trong Pool
+        if (!rawCopy.id || Number(rawCopy.id) < 100000) {
+          rawCopy.id = CMG_ASSET_ID_POOL[index] || (100000 + index)
+        }
+
+        const model = new CmgAssetModel(rawCopy)
+        const plain = typeof model.toPlainObject === 'function' 
+          ? model.toPlainObject() 
+          : JSON.parse(JSON.stringify(model))
+          
+        payload[`pack_${model.id}`] = plain
+      })
+      await set(dbRef(db, FIREBASE_ASSETS_PATH), payload)
+    },
+
+    /**
+     * Thêm mới hoặc Cập nhật 1 Asset Pack.
+     * Nếu tạo mới chưa có ID (hoặc ID không hợp lệ), tự động lấy 1 mã 6 chữ số CHƯA ĐƯỢC DÙNG từ Pool!
+     */
+    async saveAssetToFirebase(assetData) {
+      if (!assetData.id || Number(assetData.id) < 100000) {
+        assetData.id = getNextUnusedAssetId(this.assets)
+      }
+
+      const model = new CmgAssetModel(assetData)
+      const plainData = typeof model.toPlainObject === 'function' 
+        ? model.toPlainObject() 
+        : JSON.parse(JSON.stringify(model))
+
+      await set(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${model.id}`), plainData)
+      return model
+    },
+
+    /**
+     * Xóa 1 Asset Pack khỏi Firebase
+     */
+    async deleteAssetFromFirebase(assetId) {
+      const numericId = Number(assetId)
+      if (!numericId) return
+      await remove(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${numericId}`))
+    },
+
+    /**
+     * [TÍNH NĂNG ĐẶC BIỆT]: 1-Click đánh dấu Pack "Vừa được cập nhật hôm nay"
+     * Giúp người dùng thấy Pack luôn được chăm sóc và đẩy lên đầu danh sách!
+     */
+    async touchAssetLatestUpdate(assetId, customDate = null) {
+      const numericId = Number(assetId)
+      const dateStr = customDate || getTodayDateString()
+      await update(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${numericId}/dates`), {
+        latestUpdate: dateStr
+      })
+    },
+
+    /**
+     * Bật/Tắt nhanh các cờ (isFeatured, isExclusive, isLaunchEdition) ngay trên bảng Admin
+     */
+    async quickToggleAssetFlag(assetId, flagKey) {
+      const target = this.getAssetById(assetId)
+      if (!target) return
+      const newValue = !Boolean(target.flags?.[flagKey])
+      await update(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${Number(assetId)}/flags`), {
+        [flagKey]: newValue
+      })
+    },
+
+    // ========================================================
+    // NHÓM ACTIONS 2: TƯƠNG TÁC NGƯỜI DÙNG (VIEW / LIKE / DOWNLOAD)
+    // ========================================================
+
+    recordAssetView(assetId) {
+      const numericId = Number(assetId)
+      if (!numericId || isNaN(numericId)) return
+
+      const targetAsset = this.assets.find(asset => Number(asset.id) === numericId)
+      if (!targetAsset) return
+
+      const newViews = (targetAsset.metrics?.views || 0) + 1
+      targetAsset.metrics.views = newViews
+
+      // Đồng bộ số lượt xem mới lên Firebase
+      update(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${numericId}/metrics`), {
+        views: newViews
+      }).catch(() => {})
+
+      const filteredIds = this.recentlyViewedIds.filter(id => id !== numericId)
+      this.recentlyViewedIds = [numericId, ...filteredIds].slice(0, MAX_RECENT_ITEMS)
+      saveIdsToStorage(RECENTLY_VIEWED_KEY, this.recentlyViewedIds)
+    },
+
+    clearRecentlyViewed() {
+      this.recentlyViewedIds = []
+      localStorage.removeItem(RECENTLY_VIEWED_KEY)
+    },
+
+    toggleFavorite(assetId) {
+      const numericId = Number(assetId)
+      if (!numericId || isNaN(numericId)) return
+
+      const targetAsset = this.assets.find(asset => Number(asset.id) === numericId)
+      if (!targetAsset) return
+
+      const existingIndex = this.favoriteIds.indexOf(numericId)
+
+      if (existingIndex !== -1) {
+        this.favoriteIds.splice(existingIndex, 1)
+        if (targetAsset.metrics.likes > 0) targetAsset.metrics.likes--
+      } else {
+        this.favoriteIds = [numericId, ...this.favoriteIds].slice(0, MAX_FAVORITE_ITEMS)
+        targetAsset.metrics.likes++
+      }
+
+      // Đồng bộ lượt Like thật lên Firebase
+      update(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${numericId}/metrics`), {
+        likes: targetAsset.metrics.likes
+      }).catch(() => {})
+
+      saveIdsToStorage(FAVORITE_ASSETS_KEY, this.favoriteIds)
+    },
+
+    removeFavorite(assetId) {
+      const numericId = Number(assetId)
+      if (this.favoriteIds.includes(numericId)) {
+        this.toggleFavorite(numericId)
+      }
+    },
+
+    clearFavorites() {
+      this.favoriteIds = []
+      localStorage.removeItem(FAVORITE_ASSETS_KEY)
+    }
+  }
+})

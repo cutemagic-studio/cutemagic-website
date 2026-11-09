@@ -1,0 +1,918 @@
+<!-- src/components/admin/tabs/asset_manager/AssetManager.vue -->
+<template>
+  <div class="space-y-6 font-sans text-slate-900">
+
+    <!-- :class="[theme.ui.adminRoundedContainer]" -->
+    <!-- ======================================================= -->
+    <!-- HEADER & THANH CÔNG CỤ ĐỒNG BỘ FIREBASE                 -->
+    <!-- ======================================================= -->
+    <!-- HEADER & THANH CÔNG CỤ SAO LƯU / ĐỒNG BỘ FIREBASE -->
+    <!-- <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm"> -->
+    <div :class="[theme.ui.adminRoundedContainer, 'flex flex-col xl:flex-row xl:items-center justify-between gap-4']">
+        <div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full" :class="assetStore.isFirebaseSynced ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'"></span>
+          <h1 class="text-2xl font-black text-slate-800 tracking-tight">Quản lý Kho CmgAssetModel</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-50 text-blue-600 border border-blue-200">
+            Pool ID 6 Số: Đã dùng {{ assetStore.idPoolStats.usedCount }}/{{ assetStore.idPoolStats.totalPool }}
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 font-medium mt-1">
+          Định danh chuẩn 6 chữ số • Mã ID khả dụng tiếp theo: 
+          <code class="text-blue-600 font-mono font-black">#{{ assetStore.idPoolStats.nextAvailableId || 'Auto' }}</code>
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- Input chọn file ẩn dùng cho nút Khôi phục (Restore) -->
+        <input 
+          ref="restoreFileInputRef"
+          type="file" 
+          accept=".js,.json" 
+          class="hidden" 
+          @change="handleRestoreFileChange"
+        />
+
+        <!-- Nút 1: Tải file Backup Asset Pack (.js) về máy tính -->
+        <button 
+          @click="handleDownloadAssetBackup"
+          :disabled="isBackingUp"
+          class="px-3.5 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+          title="Tải toàn bộ dữ liệu Asset Pack từ Firebase về máy tính dưới dạng file .js"
+        >
+          <span>⬇️</span>
+          <span>{{ isBackingUp ? 'Đang xuất file...' : 'Sao lưu Asset (.js)' }}</span>
+        </button>
+
+        <!-- Nút 2: Khôi phục (Import) từ file Backup .js / .json lên Firebase -->
+        <button 
+          @click="triggerRestoreFilePicker"
+          :disabled="isSaving"
+          class="px-3.5 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+          title="Khôi phục dữ liệu lên Firebase từ file .js hoặc .json đã sao lưu"
+        >
+          <span>⬆️</span>
+          <span>Khôi phục File</span>
+        </button>
+
+        <!-- Nút 3: Đồng bộ 30 gói mẫu gốc (Chuẩn hóa sang ID 6 số) -->
+        <button 
+          @click="handleSeedDatabase"
+          :disabled="isSaving"
+          class="px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition-all cursor-pointer"
+          title="Đẩy 30 gói mẫu gốc lên Firebase với mã ID 6 chữ số"
+        >
+          ☁️ Reset 30 Pack gốc
+        </button>
+
+        <!-- Nút 4: Thêm Asset Pack Mới (Tự cấp ID 6 chữ số) -->
+        <button 
+          @click="openCreateModal"
+          class="px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition-all shadow-lg shadow-blue-600/25 flex items-center gap-2 cursor-pointer"
+        >
+          <span>＋</span> Thêm Pack Mới
+        </button>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 5 THẺ TÓM TẮT TRẠNG THÁI KHO ASSET                      -->
+    <!-- ======================================================= -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div @click="statusFilter = 'all'" class="bg-white p-4 rounded-xl border-2 cursor-pointer transition-all" :class="statusFilter === 'all' ? 'border-blue-500 ring-2 ring-blue-500/15' : 'border-slate-100'">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tổng số Pack</p>
+        <p class="text-2xl font-black text-slate-900 mt-1">{{ assetStore.assets.length }}</p>
+      </div>
+      <div @click="statusFilter = 'discount'" class="bg-white p-4 rounded-xl border-2 cursor-pointer transition-all" :class="statusFilter === 'discount' ? 'border-rose-500 ring-2 ring-rose-500/15' : 'border-slate-100'">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Đang Giảm giá</p>
+        <p class="text-2xl font-black text-rose-600 mt-1">{{ countByStatus.discount }}</p>
+      </div>
+      <div @click="statusFilter = 'free'" class="bg-white p-4 rounded-xl border-2 cursor-pointer transition-all" :class="statusFilter === 'free' ? 'border-emerald-500 ring-2 ring-emerald-500/15' : 'border-slate-100'">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Miễn phí (Free)</p>
+        <p class="text-2xl font-black text-emerald-600 mt-1">{{ countByStatus.free }}</p>
+      </div>
+      <div @click="statusFilter = 'upcoming'" class="bg-white p-4 rounded-xl border-2 cursor-pointer transition-all" :class="statusFilter === 'upcoming' ? 'border-amber-500 ring-2 ring-amber-500/15' : 'border-slate-100'">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Coming Soon</p>
+        <p class="text-2xl font-black text-amber-500 mt-1">{{ countByStatus.upcoming }}</p>
+      </div>
+      <div @click="statusFilter = 'roadmap'" class="bg-white p-4 rounded-xl border-2 cursor-pointer transition-all col-span-2 md:col-span-1" :class="statusFilter === 'roadmap' ? 'border-indigo-500 ring-2 ring-indigo-500/15' : 'border-slate-100'">
+        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Trên Roadmap</p>
+        <p class="text-2xl font-black text-indigo-600 mt-1">{{ countByStatus.roadmap }}</p>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- THANH TÌM KIẾM & LỌC DANH MỤC                            -->
+    <!-- ======================================================= -->
+    <!-- <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-3"> -->
+    <div :class="[theme.ui.adminRoundedContainer, 'grid grid-cols-1 md:grid-cols-4 gap-3']">
+        <div class="md:col-span-2 relative">
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Tìm theo ID, Tên Asset Pack, Slug hoặc Tag..." 
+          class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+        />
+        <span class="absolute right-4 top-2.5 opacity-30">🔍</span>
+      </div>
+
+      <select v-model="categoryFilter" class="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none">
+        <option value="all">📁 Tất cả Danh mục</option>
+        <option v-for="cat in categoriesWithoutAll" :key="cat.id" :value="cat.id">
+          {{ cat.name }} ({{ cat.id }})
+        </option>
+      </select>
+
+      <select v-model="sortOrder" class="bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 focus:outline-none">
+        <option value="id_asc">🔢 Xếp theo ID (Tăng dần)</option>
+        <option value="id_desc">🔢 Xếp theo ID (Mới nhất)</option>
+        <option value="updated_desc">🕒 Mới cập nhật gần nhất</option>
+        <option value="price_desc">💲 Giá: Cao đến Thấp</option>
+        <option value="likes_desc">❤️ Nhiều lượt Like nhất</option>
+      </select>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- BẢNG DANH SÁCH ASSET PACK & THAO TÁC NHANH              -->
+    <!-- ======================================================= -->
+    <!-- <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden"> -->
+    <div :class="[theme.ui.adminRoundedContainer, 'overflow-hidden']">
+        <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-[#1e1e1e] rounded-xl border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              <th class="p-4">ID &amp; Asset Pack</th>
+              <th class="p-4">Danh mục &amp; Models</th>
+              <th class="p-4">Giá &amp; Khuyến mãi</th>
+              <th class="p-4 text-center">Huy hiệu (Click bật/tắt)</th>
+              <th class="p-4">Cập nhật &amp; Roadmap</th>
+              <th class="p-4 text-right">Thao tác</th>
+            </tr>
+          </thead>
+
+          <tbody v-if="filteredAssets.length > 0">
+            <tr v-for="item in filteredAssets" :key="item.id" class="border-b border-slate-50 hover:bg-blue-50/25 transition-all">
+              
+              <!-- Cột 1: Ảnh Cover, ID, Title & Slug -->
+              <td class="p-4">
+                <div class="flex items-center gap-3.5 max-w-xs">
+                  <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 relative">
+                    <img v-if="item.media?.cover" :src="item.media.cover" class="w-full h-full object-cover" />
+                    <span class="absolute top-1 left-1 px-1.5 py-0.2 bg-slate-900/80 text-white rounded text-[9px] font-black">
+                      #{{ item.id }}
+                    </span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-xs font-black text-slate-900 truncate" :title="item.title">{{ item.title }}</p>
+                    <p class="text-[10px] font-mono text-slate-400 truncate">{{ item.slug }}</p>
+                    <div class="flex items-center gap-2 mt-1 text-[10px] font-bold text-slate-500">
+                      <span>❤️ {{ item.metrics?.likes || 0 }}</span>
+                      <span>👁️ {{ item.metrics?.views || 0 }}</span>
+                      <span>⬇️ {{ item.metrics?.downloads || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Cột 2: Category & Số lượng Models -->
+              <td class="p-4">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider">
+                  {{ item.categoryId }}
+                </span>
+                <p class="text-xs font-black text-slate-700 mt-1.5">
+                  {{ item.techSpecs?.modelCount || 0 }} Models
+                </p>
+                <p class="text-[10px] font-bold text-slate-400">{{ item.techSpecs?.polycount }}</p>
+              </td>
+
+              <!-- Cột 3: Giá bán & Khuyến mãi -->
+              <td class="p-4">
+                <div v-if="item.isFree">
+                  <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
+                    FREE ($0)
+                  </span>
+                </div>
+                <div v-else>
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-sm font-black text-slate-900">${{ Number(item.pricing?.price || 0).toFixed(2) }}</span>
+                    <span v-if="item.hasDiscount" class="text-xs text-slate-400 line-through font-bold">
+                      ${{ item.pricing.originalPrice }}
+                    </span>
+                  </div>
+                  <div v-if="item.hasDiscount" class="flex items-center gap-1 mt-1">
+                    <span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-600 text-[10px] font-black">
+                      -{{ item.pricing.discount }}%
+                    </span>
+                    <span v-if="item.pricing.discountEndsIn" class="text-[10px] font-bold text-rose-500">
+                      ({{ item.pricing.discountEndsIn }})
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Cột 4: Bật/Tắt nhanh 3 Cờ Flags -->
+              <td class="p-4 text-center">
+                <div class="inline-flex items-center gap-1.5">
+                  <button 
+                    @click="assetStore.quickToggleAssetFlag(item.id, 'isFeatured')"
+                    :class="item.flags?.isFeatured ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-300 border-slate-200'"
+                    class="px-2 py-1 rounded-lg border text-[10px] font-black transition-all cursor-pointer"
+                    title="Bật/Tắt Nổi bật (Featured)"
+                  >
+                    ⭐ Featured
+                  </button>
+                  <button 
+                    @click="assetStore.quickToggleAssetFlag(item.id, 'isExclusive')"
+                    :class="item.flags?.isExclusive ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-slate-50 text-slate-300 border-slate-200'"
+                    class="px-2 py-1 rounded-lg border text-[10px] font-black transition-all cursor-pointer"
+                    title="Bật/Tắt Độc quyền (Exclusive)"
+                  >
+                    💎 Excl
+                  </button>
+                  <button 
+                    @click="assetStore.quickToggleAssetFlag(item.id, 'isLaunchEdition')"
+                    :class="item.flags?.isLaunchEdition ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-slate-50 text-slate-300 border-slate-200'"
+                    class="px-2 py-1 rounded-lg border text-[10px] font-black transition-all cursor-pointer"
+                    title="Bật/Tắt Phiên bản Ra mắt (Launch Edition)"
+                  >
+                    🚀 Launch
+                  </button>
+                </div>
+              </td>
+
+              <!-- Cột 5: Ngày cập nhật & Nút "Cập nhật Hôm nay" 1-Click -->
+              <td class="p-4">
+                <div class="flex items-center gap-2">
+                  <div>
+                    <p class="text-xs font-black text-slate-800">
+                      Update: <span class="text-blue-600">{{ item.dates?.latestUpdate || item.dates?.initialRelease || 'N/A' }}</span>
+                    </p>
+                    <p v-if="item.dates?.availableIn" class="text-[10px] font-black text-amber-600">
+                      ⏳ Sắp ra: {{ item.dates.availableIn }}
+                    </p>
+                    <p v-else-if="item.roadmap?.status" class="text-[10px] font-bold text-indigo-600">
+                      🗺️ Roadmap: {{ item.roadmap.status.toUpperCase() }} ({{ item.roadmap.progress }}%)
+                    </p>
+                  </div>
+
+                  <!-- Nút 1-Click đặt ngày cập nhật là Hôm nay -->
+                  <button 
+                    @click="handleTouchToday(item)"
+                    class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-[10px] font-black transition-colors cursor-pointer shrink-0"
+                    title="Đặt ngày cập nhật gần nhất (latestUpdate) thành Hôm nay"
+                  >
+                    🔄 Nay
+                  </button>
+                </div>
+              </td>
+
+              <!-- Cột 6: Sửa / Nhân bản / Xóa -->
+              <td class="p-4 text-right">
+                <div class="inline-flex items-center gap-1.5">
+                  <button 
+                    @click="openEditModal(item)"
+                    class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-black transition-colors cursor-pointer"
+                  >
+                    ✏️ Sửa
+                  </button>
+                  <button 
+                    @click="handleCloneAsset(item)"
+                    class="p-1.5 rounded-xl bg-slate-100 hover:bg-indigo-100 text-slate-600 hover:text-indigo-700 text-xs font-black transition-colors cursor-pointer"
+                    title="Nhân bản Pack này"
+                  >
+                    📋
+                  </button>
+                  <button 
+                    @click="handleDeleteAsset(item)"
+                    class="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-xs font-black transition-colors cursor-pointer"
+                    title="Xóa Pack"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="6" class="p-16 text-center text-slate-400 font-bold">
+                Không tìm thấy Asset Pack nào khớp với bộ lọc hiện tại.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- MODAL BIÊN TẬP TOÀN DIỆN CMGASSETMODEL (6 TABS)         -->
+    <!-- ======================================================= -->
+    <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" @click.self="closeModal">
+      <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-blue-400">
+              {{ isEditMode ? `Chỉnh sửa Asset Pack #${formData.id}` : 'Tạo mới CmgAssetModel' }}
+            </span>
+            <h3 class="text-lg font-black truncate max-w-lg">{{ formData.title || 'Untitled Asset Pack' }}</h3>
+          </div>
+          <button @click="closeModal" class="w-8 h-8 rounded-full bg-white/10 hover:bg-rose-500 text-white font-black text-sm cursor-pointer">✕</button>
+        </div>
+
+        <!-- Thanh Chuyển 6 Nhóm Thuộc tính của CmgAssetModel -->
+        <div class="px-6 pt-3 bg-slate-50 border-b border-slate-200 flex items-center gap-2 overflow-x-auto shrink-0">
+          <button 
+            v-for="mTab in modalTabs" 
+            :key="mTab.id"
+            @click="activeModalTab = mTab.id"
+            :class="activeModalTab === mTab.id ? 'bg-white text-blue-600 border-b-2 border-blue-600 shadow-xs' : 'text-slate-500 hover:text-slate-800'"
+            class="px-4 py-2.5 rounded-t-xl text-xs font-black whitespace-nowrap transition-all cursor-pointer"
+          >
+            {{ mTab.icon }} {{ mTab.label }}
+          </button>
+        </div>
+
+        <!-- Nội dung Form theo từng Tab -->
+        <div class="p-6 overflow-y-auto flex-1 space-y-5">
+
+          <!-- TAB 1: ĐỊNH DANH & CỜ TRẠNG THÁI (IDENTITY & FLAGS) -->
+          <div v-if="activeModalTab === 'identity'" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <!-- Cột chọn Mã ID 6 chữ số từ Pool 100 số -->
+              <div>
+                <label class="block text-[11px] font-black uppercase text-blue-600 mb-1.5">
+                  Mã ID (6 Chữ số) *
+                </label>
+                <!-- Nếu đang sửa Pack cũ thì khóa ID để tránh gãy link, nếu Tạo mới thì cho chọn từ Pool ID trống -->
+                <select 
+                  v-if="!isEditMode" 
+                  v-model.number="formData.id"
+                  class="w-full border border-blue-300 bg-blue-50/50 rounded-xl px-3 py-2.5 text-sm font-mono font-black text-blue-700 focus:outline-none"
+                >
+                  <option v-for="freeId in assetStore.availablePoolIds" :key="freeId" :value="freeId">
+                    #{{ freeId }} (Chưa dùng)
+                  </option>
+                </select>
+                <input 
+                  v-else 
+                  :value="`#${formData.id}`" 
+                  disabled 
+                  class="w-full border border-slate-200 bg-slate-100 rounded-xl px-3.5 py-2.5 text-sm font-mono font-black text-slate-500 cursor-not-allowed" 
+                />
+              </div>
+
+              <!-- Tên Asset Pack -->
+              <div class="md:col-span-2">
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Tên Asset Pack (Title) *</label>
+                <input v-model="formData.title" @input="autoFillSlug" type="text" placeholder="VD: Stylized Lowpoly Tree Pack" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500" />
+              </div>
+
+              <!-- Danh mục -->
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Danh mục (Category) *</label>
+                <select v-model="formData.categoryId" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500">
+                  <option v-for="cat in categoriesWithoutAll" :key="cat.id" :value="cat.id">{{ cat.name }} ({{ cat.id }})</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="md:col-span-2">
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Đường dẫn tĩnh (Slug)</label>
+                <input v-model="formData.slug" type="text" placeholder="stylized-lowpoly-tree-pack" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Nhà phát hành (Publisher)</label>
+                <input v-model="formData.publisher" type="text" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-blue-500" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Từ khóa (Tags - Ngăn cách bằng dấu phẩy)</label>
+              <input v-model="tagsTextInput" type="text" placeholder="trees, foliage, nature, lowpoly, stylized" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-blue-500" />
+            </div>
+
+            <!-- 3 Cờ Flags -->
+            <div class="pt-3 border-t border-slate-100">
+              <label class="block text-[11px] font-black uppercase text-slate-500 mb-3">Cờ Trạng thái &amp; Huy hiệu (Flags)</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer" :class="formData.flags.isFeatured ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'">
+                  <input type="checkbox" v-model="formData.flags.isFeatured" class="w-4 h-4 accent-amber-500" />
+                  <div>
+                    <p class="text-xs font-black text-slate-800">⭐ Featured Pack</p>
+                    <p class="text-[10px] font-bold text-slate-400">Ưu tiên hiển thị nổi bật</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer" :class="formData.flags.isExclusive ? 'bg-purple-50 border-purple-300' : 'bg-slate-50 border-slate-200'">
+                  <input type="checkbox" v-model="formData.flags.isExclusive" class="w-4 h-4 accent-purple-600" />
+                  <div>
+                    <p class="text-xs font-black text-slate-800">💎 Exclusive</p>
+                    <p class="text-[10px] font-bold text-slate-400">Độc quyền Cute Magic</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer" :class="formData.flags.isLaunchEdition ? 'bg-blue-50 border-blue-300' : 'bg-slate-50 border-slate-200'">
+                  <input type="checkbox" v-model="formData.flags.isLaunchEdition" class="w-4 h-4 accent-blue-600" />
+                  <div>
+                    <p class="text-xs font-black text-slate-800">🚀 Launch Edition</p>
+                    <p class="text-[10px] font-bold text-slate-400">Phiên bản mới ra mắt</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: GIÁ BÁN & KHUYẾN MÃI (PRICING) -->
+          <div v-if="activeModalTab === 'pricing'" class="space-y-5">
+            <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <div>
+                <p class="text-xs font-black text-slate-800">Chế độ Miễn phí 100% (Free Starter Pack)</p>
+                <p class="text-[11px] text-slate-500">Đặt giá về $0.00 và kích hoạt nút Download trực tiếp</p>
+              </div>
+              <button 
+                type="button"
+                @click="setAsFreePack"
+                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black cursor-pointer"
+              >
+                🎁 Đặt làm Pack Miễn phí ($0)
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Giá bán hiện tại ($) *</label>
+                <input v-model.number="formData.pricing.price" type="number" step="0.5" min="0" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-black text-blue-600" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Giá gốc chưa giảm ($)</label>
+                <input v-model.number="formData.pricing.originalPrice" @input="recalculateDiscountPrice" type="number" step="0.5" min="0" placeholder="Để trống nếu ko giảm" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">% Giảm giá (Discount)</label>
+                <input v-model.number="formData.pricing.discount" @input="recalculateDiscountPrice" type="number" min="0" max="100" placeholder="VD: 50" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-600" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Thời hạn Sale (Ends In)</label>
+                <input v-model="formData.pricing.discountEndsIn" type="text" placeholder="VD: 3 days left" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: NỘI DUNG MÔ TẢ (CONTENT) -->
+          <div v-if="activeModalTab === 'content'" class="space-y-4">
+            <div>
+              <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">Mô tả ngắn (Short Description - Hiển thị ở Card)</label>
+              <input v-model="formData.content.shortDescription" type="text" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">
+                Mô tả chi tiết (Full Description - Mỗi đoạn văn 1 dòng)
+              </label>
+              <textarea v-model="fullDescriptionText" rows="4" placeholder="Nhập mỗi đoạn văn trên 1 dòng..." class="w-full border border-slate-200 rounded-xl p-3.5 text-xs font-medium leading-relaxed"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-black uppercase text-slate-500 mb-1.5">
+                Danh sách Tính năng nổi bật (Features - Mỗi gạch đầu dòng 1 dòng)
+              </label>
+              <textarea v-model="featuresText" rows="5" placeholder="65 mô hình thực vật đa dạng...&#10;Tối ưu hóa hoàn hảo cho Mobile & URP..." class="w-full border border-slate-200 rounded-xl p-3.5 text-xs font-bold leading-relaxed"></textarea>
+            </div>
+          </div>
+
+          <!-- TAB 4: HÌNH ẢNH & THÔNG SỐ 3D (MEDIA & TECH SPECS) -->
+          <div v-if="activeModalTab === 'media_tech'" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+              <div class="md:col-span-2 space-y-3">
+                <div>
+                  <label class="block text-[11px] font-black uppercase text-slate-500 mb-1">Ảnh bìa chính (Cover Image URL)</label>
+                  <input v-model="formData.media.cover" type="text" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-black uppercase text-slate-500 mb-1">Danh sách Ảnh Gallery (Mỗi URL 1 dòng)</label>
+                  <textarea v-model="galleryText" rows="3" class="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono"></textarea>
+                </div>
+              </div>
+              <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-center">
+                <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Xem trước Cover</p>
+                <img v-if="formData.media.cover" :src="formData.media.cover" class="w-full h-32 object-cover rounded-xl border" />
+                <div v-else class="h-32 flex items-center justify-center text-xs text-slate-400">Chưa có ảnh</div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Số lượng Pack</label>
+                <input v-model.number="formData.techSpecs.packCount" type="number" min="1" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Tổng số 3D Models *</label>
+                <input v-model.number="formData.techSpecs.modelCount" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-blue-600" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Polycount</label>
+                <input v-model="formData.techSpecs.polycount" type="text" placeholder="800 - 2,500 tris" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Render Pipeline</label>
+                <input v-model="formData.techSpecs.renderPipeline" type="text" placeholder="Unity URP & Blender 5" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Rigged (Gắn xương)</label>
+                <input v-model="formData.techSpecs.rigged" type="text" placeholder="Yes (Humanoid)" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Animated (Hoạt ảnh)</label>
+                <input v-model="formData.techSpecs.animated" type="text" placeholder="Yes / No" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+              <div class=" col-span-2">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Textures &amp; Materials</label>
+                <input v-model="formData.techSpecs.textures" type="text" placeholder="1x 4K Color Atlas (.png)" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: LINKS CỬA HÀNG & FILE DOWNLOAD (LINKS & DOWNLOAD) -->
+          <div v-if="activeModalTab === 'links_download'" class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Unity Asset Store URL</label>
+                <input v-model="formData.links.unity" type="text" placeholder="https://assetstore.unity.com/..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Fab URL</label>
+                <input v-model="formData.links.fab" type="text" placeholder="https://www.fab.com/..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Itch.io URL</label>
+                <input v-model="formData.links.itch" type="text" placeholder="https://itch.io/..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">CGTrader URL</label>
+                <input v-model="formData.links.cgtrader" type="text" placeholder="https://www.cgtrader.com/..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono" />
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100">
+              <p class="text-xs font-black text-slate-700 mb-3">📦 Cấu hình File Tải xuống Trực tiếp (Dành cho Pack Free)</p>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="md:col-span-2">
+                  <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Đường dẫn File (Download URL)</label>
+                  <input v-model="formData.download.url" type="text" placeholder="/downloads/cmg-starter-free.zip" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Dung lượng (File Size)</label>
+                  <input v-model="formData.download.fileSize" type="text" placeholder="24.5 MB" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Phiên bản (Version)</label>
+                  <input v-model="formData.download.version" type="text" placeholder="1.2.0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 6: THỜI GIAN, ROADMAP & CHỈ SỐ (DATES, ROADMAP & METRICS) -->
+          <div v-if="activeModalTab === 'dates_roadmap'" class="space-y-5">
+            <!-- Quản lý Ngày tháng -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Ngày phát hành đầu (Initial Release)</label>
+                <input v-model="formData.dates.initialRelease" type="date" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-black" />
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[10px] font-black uppercase text-blue-600">Cập nhật gần nhất (Latest Update)</label>
+                  <button type="button" @click="formData.dates.latestUpdate = getTodayDateString()" class="text-[10px] font-black text-blue-600 underline cursor-pointer">Hôm nay</button>
+                </div>
+                <input v-model="formData.dates.latestUpdate" type="date" class="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-black text-blue-600" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-amber-600 mb-1">Nhãn Sắp ra mắt (Available In)</label>
+                <input v-model="formData.dates.availableIn" type="text" placeholder="Để trống nếu đã ra mắt (VD: 2 weeks)" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+            </div>
+
+            <!-- Quản lý Tiến độ Roadmap -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl border border-slate-200">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Trạng thái Roadmap</label>
+                <select v-model="formData.roadmap.status" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black">
+                  <option :value="null">Không hiển thị trên Roadmap</option>
+                  <option value="prev">✅ Tháng trước (Completed - prev)</option>
+                  <option value="current">⚡ Tháng này (In Progress - current)</option>
+                  <option value="next">📅 Tháng sau (Planned - next)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Tiến độ hoàn thành ({{ formData.roadmap.progress }}%)</label>
+                <input v-model.number="formData.roadmap.progress" type="range" min="0" max="100" step="5" class="w-full accent-blue-600 mt-2" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Dự kiến bàn giao (Estimated)</label>
+                <input v-model="formData.roadmap.estimatedDelivery" type="text" placeholder="VD: End of Nov 2026" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Ghi chú tiến độ (Roadmap Note)</label>
+                <input v-model="formData.roadmap.note" type="text" placeholder="VD: Đang tối ưu thêm 10 mẫu cây mùa đông..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold" />
+              </div>
+            </div>
+
+            <!-- Điều chỉnh số liệu Metrics -->
+            <div class="grid grid-cols-3 gap-4 pt-2">
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">❤️ Lượt Yêu thích (Likes)</label>
+                <input v-model.number="formData.metrics.likes" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">👁️ Lượt Xem (Views)</label>
+                <input v-model.number="formData.metrics.views" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">⬇️ Lượt Tải (Downloads)</label>
+                <input v-model.number="formData.metrics.downloads" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <span class="text-xs font-bold text-slate-400">
+            Mọi thay đổi sẽ được lưu trực tiếp lên nhánh <code class="text-blue-600 font-mono">cmg_assets/pack_{{ formData.id || 'new' }}</code>
+          </span>
+          <div class="flex items-center gap-3">
+            <button @click="closeModal" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-black text-slate-600 cursor-pointer">
+              Hủy bỏ
+            </button>
+            <button 
+              @click="handleSaveAsset" 
+              :disabled="isSaving"
+              class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow-lg shadow-blue-600/25 cursor-pointer"
+            >
+              {{ isSaving ? 'Đang lưu lên Firebase...' : '💾 Lưu Asset Pack' }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useAssetStore, getTodayDateString } from '../../../../stores/useAssetStore'
+import { CmgAssetModel } from '../../../../models/cmg/Cmg_AssetModel'
+
+// Thêm 2 dòng import này vào đầu <script setup> của AssetManager.vue:
+import { getNextUnusedAssetId } from '../../../../data/assets/cmg/cmg_id_pool'
+import { downloadAssetsBackupJS, restoreAssetsFromFile } from '../../../../services/backupService'
+
+import { useThemeStore } from '../../../../stores/useThemeStore.js'
+const theme = useThemeStore()
+
+const assetStore = useAssetStore()
+
+const isBackingUp = ref(false)
+const restoreFileInputRef = ref(null)
+
+// Khởi tạo đồng bộ Firebase ngay khi mở trình quản lý
+onMounted(() => {
+  assetStore.initFirebaseAssetsSync()
+})
+
+// Bộ lọc danh sách
+const searchQuery = ref('')
+const categoryFilter = ref('all')
+const statusFilter = ref('all') // 'all' | 'discount' | 'free' | 'upcoming' | 'roadmap'
+const sortOrder = ref('id_asc')
+const isSaving = ref(false)
+
+// Trạng thái Modal
+const isModalOpen = ref(false)
+const isEditMode = ref(false)
+const activeModalTab = ref('identity')
+const formData = ref(new CmgAssetModel().toPlainObject ? new CmgAssetModel().toPlainObject() : JSON.parse(JSON.stringify(new CmgAssetModel())))
+
+// Các biến Text trung gian cho mảng (Tags, FullDescription, Features, Gallery)
+const tagsTextInput = ref('')
+const fullDescriptionText = ref('')
+const featuresText = ref('')
+const galleryText = ref('')
+
+const modalTabs = [
+  { id: 'identity', icon: '🏷️', label: '1. Định danh & Cờ' },
+  { id: 'pricing', icon: '💲', label: '2. Giá & Khuyến mãi' },
+  { id: 'content', icon: '📝', label: '3. Nội dung & Tính năng' },
+  { id: 'media_tech', icon: '🎨', label: '4. Ảnh & Thông số 3D' },
+  { id: 'links_download', icon: '🔗', label: '5. Store Links & File' },
+  { id: 'dates_roadmap', icon: '📅', label: '6. Ngày, Roadmap & Chỉ số' }
+]
+
+const categoriesWithoutAll = computed(() => assetStore.categories.filter(c => c.id !== 'all'))
+
+const countByStatus = computed(() => ({
+  discount: assetStore.assets.filter(a => a.hasDiscount).length,
+  free: assetStore.assets.filter(a => a.isFree).length,
+  upcoming: assetStore.upcomingAssets.length,
+  roadmap: assetStore.roadmapAssets.length
+}))
+
+const filteredAssets = computed(() => {
+  const q = searchQuery.value.toLowerCase().trim()
+  return [...assetStore.assets]
+    .filter(item => {
+      const matchSearch = !q ||
+        String(item.id).includes(q) ||
+        (item.title || '').toLowerCase().includes(q) ||
+        (item.slug || '').toLowerCase().includes(q) ||
+        (item.tags || []).some(t => t.toLowerCase().includes(q))
+
+      const matchCategory = categoryFilter.value === 'all' || item.categoryId === categoryFilter.value
+
+      let matchStatus = true
+      if (statusFilter.value === 'discount') matchStatus = item.hasDiscount
+      else if (statusFilter.value === 'free') matchStatus = item.isFree
+      else if (statusFilter.value === 'upcoming') matchStatus = Boolean(item.dates?.availableIn) || item.roadmap?.status === 'next'
+      else if (statusFilter.value === 'roadmap') matchStatus = item.isInRoadmap
+
+      return matchSearch && matchCategory && matchStatus
+    })
+    .sort((a, b) => {
+      if (sortOrder.value === 'id_desc') return Number(b.id) - Number(a.id)
+      if (sortOrder.value === 'updated_desc') return new Date(b.releaseDate) - new Date(a.releaseDate)
+      if (sortOrder.value === 'price_desc') return (b.pricing?.price || 0) - (a.pricing?.price || 0)
+      if (sortOrder.value === 'likes_desc') return (b.metrics?.likes || 0) - (a.metrics?.likes || 0)
+      return Number(a.id) - Number(b.id)
+    })
+})
+
+// Mở Modal Tạo mới
+// Cập nhật lại hàm openCreateModal() để tự động lấy ngay 1 ID 6 chữ số chưa dùng:
+const openCreateModal = () => {
+  isEditMode.value = false
+  activeModalTab.value = 'identity'
+  const today = getTodayDateString()
+  
+  // Lấy tự động 1 mã ID 6 chữ số đầu tiên còn trống trong Pool 100 số
+  const nextFree6DigitId = getNextUnusedAssetId(assetStore.assets)
+
+  const blank = new CmgAssetModel({
+    id: nextFree6DigitId,
+    categoryId: 'characters',
+    dates: { initialRelease: today, latestUpdate: today, availableIn: '' },
+    techSpecs: { packCount: 1, modelCount: 20 }
+  })
+  formData.value = JSON.parse(JSON.stringify(blank))
+  syncArraysToTextInputs()
+  isModalOpen.value = true
+}
+
+// Mở Modal Chỉnh sửa
+const openEditModal = (asset) => {
+  isEditMode.value = true
+  activeModalTab.value = 'identity'
+  formData.value = JSON.parse(JSON.stringify(asset))
+  syncArraysToTextInputs()
+  isModalOpen.value = true
+}
+
+const syncArraysToTextInputs = () => {
+  tagsTextInput.value = (formData.value.tags || []).join(', ')
+  fullDescriptionText.value = (formData.value.content?.fullDescription || []).join('\n')
+  featuresText.value = (formData.value.content?.features || []).join('\n')
+  galleryText.value = (formData.value.media?.gallery || []).join('\n')
+}
+
+const syncTextInputsToArrays = () => {
+  formData.value.tags = tagsTextInput.value.split(',').map(s => s.trim()).filter(Boolean)
+  formData.value.content.fullDescription = fullDescriptionText.value.split('\n').map(s => s.trim()).filter(Boolean)
+  formData.value.content.features = featuresText.value.split('\n').map(s => s.trim()).filter(Boolean)
+  formData.value.media.gallery = galleryText.value.split('\n').map(s => s.trim()).filter(Boolean)
+}
+
+const autoFillSlug = () => {
+  if (!isEditMode.value) {
+    formData.value.slug = (formData.value.title || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+  }
+}
+
+const recalculateDiscountPrice = () => {
+  const orig = Number(formData.value.pricing.originalPrice)
+  const disc = Number(formData.value.pricing.discount)
+  if (orig > 0 && disc > 0 && disc <= 100) {
+    formData.value.pricing.price = Number((orig * (1 - disc / 100)).toFixed(2))
+  }
+}
+
+const setAsFreePack = () => {
+  formData.value.pricing.price = 0
+  formData.value.pricing.originalPrice = null
+  formData.value.pricing.discount = null
+  formData.value.pricing.discountEndsIn = ''
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+}
+
+// Lưu Asset Pack lên Firebase
+const handleSaveAsset = async () => {
+  if (!formData.value.title?.trim()) {
+    alert('Vui lòng nhập Tên Asset Pack!')
+    return
+  }
+  isSaving.value = true
+  try {
+    syncTextInputsToArrays()
+    await assetStore.saveAssetToFirebase(formData.value)
+    isModalOpen.value = false
+  } catch (err) {
+    alert('Lỗi khi lưu lên Firebase: ' + err.message)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// 1-Click Cập nhật ngày hôm nay
+const handleTouchToday = async (item) => {
+  await assetStore.touchAssetLatestUpdate(item.id)
+}
+
+// Nhân bản Pack
+const handleCloneAsset = async (item) => {
+  if (!confirm(`Bạn muốn nhân bản gói "${item.title}" thành một Pack mới?`)) return
+  const cloned = JSON.parse(JSON.stringify(item))
+  cloned.id = null
+  cloned.title = `${item.title} (Copy)`
+  cloned.slug = `${item.slug}-copy`
+  await assetStore.saveAssetToFirebase(cloned)
+}
+
+// Xóa Pack
+const handleDeleteAsset = async (item) => {
+  if (!confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa gói "#${item.id} - ${item.title}" khỏi Firebase không?`)) return
+  await assetStore.deleteAssetFromFirebase(item.id)
+}
+
+// Đồng bộ 30 Pack gốc lên Firebase
+const handleSeedDatabase = async () => {
+  if (!confirm('Thao tác này sẽ ghi đè 30 gói dữ liệu mẫu gốc từ file JS lên Firebase. Bạn có muốn tiếp tục?')) return
+  isSaving.value = true
+  try {
+    await assetStore.seedMockAssetsToFirebase()
+    alert('Đã đồng bộ 30 Asset Pack mẫu lên Firebase thành công!')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// 1. Hàm xử lý tải file Backup Asset Packs (.js) về máy 
+const handleDownloadAssetBackup = async () => {
+  isBackingUp.value = true
+  const res = await downloadAssetsBackupJS(assetStore.assets)
+  isBackingUp.value = false
+
+  if (!res.success) {
+    alert('Lỗi khi xuất file sao lưu: ' + res.error)
+  }
+}
+
+// 2. Hàm mở hộp thoại chọn file để Khôi phục (Restore)
+const triggerRestoreFilePicker = () => {
+  restoreFileInputRef.value?.click()
+}
+
+// 3. Hàm xử lý khi Admin chọn file .js / .json từ máy tính để đẩy lên Firebase
+const handleRestoreFileChange = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  if (!confirm(`Bạn có chắc chắn muốn khôi phục dữ liệu Asset Pack từ file "${file.name}" lên Firebase không?`)) {
+    event.target.value = ''
+    return
+  }
+
+  isSaving.value = true
+  try {
+    const result = await restoreAssetsFromFile(file)
+    alert(`Khôi phục thành công ${result.count} Asset Packs lên Firebase!`)
+  } catch (err) {
+    alert('Lỗi khi khôi phục file: ' + err.message)
+  } finally {
+    isSaving.value = false
+    event.target.value = ''
+  }
+}
+</script>

@@ -347,7 +347,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useAssetStore } from '../../../../stores/useAssetStore.js' // Cập nhật đường dẫn đúng của bạn
+import { useAssetStore } from '../../../../stores/useAssetStore.js'
 import { useThemeStore } from '../../../../stores/useThemeStore'
 
 import AssetCard from '../asset_detail/child_components/AssetCard.vue'
@@ -360,27 +360,21 @@ import HomeButton from '../../../../components/base/HomeButton.vue'
 
 import AssetLibraryMegaMenu from '../../../../components/layout/AssetLibraryMegaMenu.vue'
 
-// Khởi tạo Store 
+// Khởi tạo Store & Router
 const assetStore = useAssetStore()
 const theme = useThemeStore()
+const route = useRoute()
+const router = useRouter()
 
-// Rút dữ liệu (Mảng assets và categories) từ Pinia, đảm bảo tính Reactivity
-// 1. Lấy thêm mảng favoriteIds từ Pinia Store để đảm bảo tính Reactive khi người dùng bấm tim trên Card
+// Lấy dữ liệu Reactive trực tiếp từ Pinia Store (tự động cập nhật khi Firebase thay đổi)
 const { assets, categories, favoriteIds } = storeToRefs(assetStore)
 
 // ========================================================
 // MegaMenu
 // ========================================================
 const activeMenu = ref(null)
-// Hàm xử lý việc chuyển đổi giữa các menu
 const toggleMenu = (menuName) => {
-    if (activeMenu.value === menuName) {
-        // Click lại đúng nút đang mở -> Đóng nó
-        activeMenu.value = null
-    } else {
-        // Click nút khác -> Gán tên nút đó (Tự động đóng nút cũ)
-        activeMenu.value = menuName
-    }
+    activeMenu.value = activeMenu.value === menuName ? null : menuName
 }
 
 // --- STATE BẮT SỰ KIỆN CUỘN TRANG (CHO BREADCRUMB) ---
@@ -389,7 +383,7 @@ const handleScroll = () => {
     isScrolled.value = window.scrollY > 20
 }
 
-// Biến quản lý số cột của lưới (mặc định là 4 cột)
+// Biến quản lý số cột của lưới (mặc định 4 cột)
 const gridCols = ref(4)
 
 // --- HÀM GIẢM KHOẢNG CÁCH LĂN CHUỘT ---
@@ -415,6 +409,9 @@ const handleCustomWheel = (e) => {
 }
 
 onMounted(() => {
+    // [QUAN TRỌNG]: Đảm bảo kho Asset luôn được đồng bộ với Firebase khi vào thẳng trang Library
+    assetStore.initFirebaseAssetsSync()
+
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('wheel', handleCustomWheel, { passive: false })
 })
@@ -430,7 +427,7 @@ const searchQuery = ref('')
 const selectedCategoryId = ref('all')
 const sortOrder = ref('newest')
 
-const isFavoritesOnly = ref(false) // [THÊM MỚI]: Trạng thái lọc Yêu thích
+const isFavoritesOnly = ref(false)
 const isFreeOnly = ref(false)
 const minPrice = ref(null)
 const maxPrice = ref(null)
@@ -441,59 +438,77 @@ const currentPage = ref(1)
 // Hàm bật/tắt nhanh nút Yêu thích trên thanh công cụ
 const toggleFavoriteFilter = () => {
     isFavoritesOnly.value = !isFavoritesOnly.value
-    currentPage.value = 1 // Reset về trang 1 khi đổi bộ lọc
+    currentPage.value = 1
 }
 
-// --- LOGIC BỘ LỌC TỔNG HỢP (COMPUTED) CHẠY TRÊN DỮ LIỆU CỦA PINIA ---
-const filteredAssets = computed(() => {
-    // 1. Lọc theo Danh mục trước (Tạo bản sao mảng bằng [...] để tránh làm biến đổi mảng gốc khi sort)
-    let result = [...assetStore.getAssetsByCategory(selectedCategoryId.value)]
+// Tự động đưa về trang 1 khi người dùng gõ tìm kiếm hoặc đổi bộ lọc giá/sắp xếp
+watch([searchQuery, isFreeOnly, minPrice, maxPrice, sortOrder], () => {
+    currentPage.value = 1
+})
 
-    // 2. [THÊM MỚI]: Lọc theo trạng thái "Yêu thích"
+// --- LOGIC BỘ LỌC TỔNG HỢP (COMPUTED) ĐỒNG BỘ THỜI GIAN THỰC VỚI FIREBASE ---
+const filteredAssets = computed(() => {
+    // 1. Đọc trực tiếp từ assets.value để Vue theo dõi (track) mọi thay đổi từ Firebase
+    let result = selectedCategoryId.value === 'all' || !selectedCategoryId.value
+        ? [...assets.value]
+        : assets.value.filter(a => a.categoryId === selectedCategoryId.value)
+
+    // 2. Lọc theo trạng thái "Yêu thích"
     if (isFavoritesOnly.value) {
         const favSet = new Set(favoriteIds.value.map(Number))
         result = result.filter(a => favSet.has(Number(a.id)))
     }
 
-    // 3. Lọc theo Tìm kiếm Text (Tìm trong title)
+    // 3. Lọc theo Tìm kiếm Text (Hỗ trợ tìm theo Tên, Mã ID 6 số, Slug hoặc Tags)
     if (searchQuery.value.trim() !== '') {
-        const query = searchQuery.value.toLowerCase()
-        result = result.filter(a => a.title.toLowerCase().includes(query))
+        const query = searchQuery.value.toLowerCase().trim()
+        result = result.filter(a => {
+            const matchTitle = (a.title || '').toLowerCase().includes(query)
+            const matchId = String(a.id || '').includes(query)
+            const matchSlug = (a.slug || '').toLowerCase().includes(query)
+            const matchTags = Array.isArray(a.tags) && a.tags.some(t => t.toLowerCase().includes(query))
+            return matchTitle || matchId || matchSlug || matchTags
+        })
     }
 
-    // 4. Lọc theo Mức giá (Trường hợp đánh dấu "Free")
+    // 4. Lọc theo Mức giá (Tương thích chuẩn với CmgAssetModel)
     if (isFreeOnly.value) {
-        result = result.filter(a => a.price === 0)
+        result = result.filter(a => Number(a.pricing?.price ?? a.price ?? 0) === 0)
     } else {
         if (minPrice.value !== null && minPrice.value !== '') {
-            result = result.filter(a => a.price >= minPrice.value)
+            result = result.filter(a => Number(a.pricing?.price ?? a.price ?? 0) >= Number(minPrice.value))
         }
         if (maxPrice.value !== null && maxPrice.value !== '') {
-            result = result.filter(a => a.price <= maxPrice.value)
+            result = result.filter(a => Number(a.pricing?.price ?? a.price ?? 0) <= Number(maxPrice.value))
         }
     }
 
     // 5. Sắp xếp (Sort)
     if (sortOrder.value === 'price_asc') {
-        result.sort((a, b) => a.price - b.price)
+        result.sort((a, b) => Number(a.pricing?.price ?? a.price ?? 0) - Number(b.pricing?.price ?? b.price ?? 0))
     } else if (sortOrder.value === 'price_desc') {
-        result.sort((a, b) => b.price - a.price)
+        result.sort((a, b) => Number(b.pricing?.price ?? b.price ?? 0) - Number(a.pricing?.price ?? a.price ?? 0))
     } else if (sortOrder.value === 'popular') {
-        // Sắp xếp theo lượt Like từ cao xuống thấp
-        result.sort((a, b) => (b.likes || b.stats?.likes || 0) - (a.likes || a.stats?.likes || 0))
-    } else { // 'newest'
-        result.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate))
+        // Ưu tiên xếp theo lượt Like trên Firebase, nếu bằng nhau thì xét tiếp lượt Download
+        result.sort((a, b) => {
+            const likeDiff = (b.metrics?.likes ?? b.likes ?? 0) - (a.metrics?.likes ?? a.likes ?? 0)
+            if (likeDiff !== 0) return likeDiff
+            return (b.metrics?.downloads ?? 0) - (a.metrics?.downloads ?? 0)
+        })
+    } else {
+        // 'newest': Xếp theo ngày cập nhật mới nhất (latestUpdate) hoặc ngày phát hành (initialRelease)
+        result.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0))
     }
 
     return result
 })
 
-// Tính tổng số trang dựa trên độ dài mảng đã lọc
+// Tính tổng số trang
 const totalPages = computed(() => {
-    return Math.ceil(filteredAssets.value.length / itemsPerPage)
+    return Math.ceil(filteredAssets.value.length / itemsPerPage) || 1
 })
 
-// Cắt mảng để lấy item cho trang hiện tại
+// Cắt mảng lấy sản phẩm cho trang hiện tại
 const paginatedAssets = computed(() => {
     const startIndex = (currentPage.value - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
@@ -501,19 +516,16 @@ const paginatedAssets = computed(() => {
 })
 
 // --- CÁC HÀM XỬ LÝ SỰ KIỆN ---
-
-// Xóa trắng toàn bộ filter
 const resetFilters = () => {
     searchQuery.value = ''
     selectedCategoryId.value = 'all'
-    isFavoritesOnly.value = false // [THÊM DÒNG NÀY]
+    isFavoritesOnly.value = false
     isFreeOnly.value = false
     minPrice.value = null
     maxPrice.value = null
     sortOrder.value = 'newest'
     currentPage.value = 1
 
-    // Xóa sạch query trên URL (nếu có) để URL trở về '/assets' gọn gàng
     if (Object.keys(route.query).length > 0) {
         router.replace({ path: route.path, query: {} })
     }
@@ -538,14 +550,12 @@ const goToPage = (page) => {
     scrollToGrid()
 }
 
-// Hàm đổi danh mục (Nhận vào 1 ID)
 const changeCategory = (categoryId) => {
     selectedCategoryId.value = categoryId
     currentPage.value = 1
     scrollToGrid()
 }
 
-// Hàm cuộn mượt lên đầu lưới Asset
 const scrollToGrid = () => {
     const gridEl = document.getElementById('asset-grid')
     if (gridEl) {
@@ -553,44 +563,40 @@ const scrollToGrid = () => {
     }
 }
 
-const route = useRoute()
-const router = useRouter()
-
 // ========================================================
 // ĐỒNG BỘ URL QUERY TỪ MEGA MENU VÀO BỘ LỌC
 // ========================================================
 watch(
     () => route.query,
     (query) => {
-        // Nếu nhảy từ Mega Menu vào với ?filter=free
         if (query.filter === 'free') {
             isFreeOnly.value = true
             isFavoritesOnly.value = false
             minPrice.value = null
             maxPrice.value = null
-            isFilterOpen.value = true // Tự động mở Sidebar bộ lọc để user thấy ô Free đã được tích
+            isFilterOpen.value = true
             currentPage.value = 1
-        } 
-        // Nếu nhảy từ Mega Menu vào với ?filter=favorites
-        else if (query.filter === 'favorites') {
+        } else if (query.filter === 'favorites') {
             isFavoritesOnly.value = true
             isFreeOnly.value = false
             currentPage.value = 1
-        } 
-        // Nếu bấm "Xem All Assets" (URL không có query filter)
-        else if (!query.filter) {
+        } else if (!query.filter) {
             isFreeOnly.value = false
             isFavoritesOnly.value = false
         }
 
-        // (Tùy chọn) Nếu có truyền thêm ?category=... từ Mega Menu
         if (query.category) {
             selectedCategoryId.value = query.category
             isFilterOpen.value = true
             currentPage.value = 1
         }
+
+        if (query.sort && ['newest', 'popular', 'price_asc', 'price_desc'].includes(query.sort)) {
+            sortOrder.value = query.sort
+            currentPage.value = 1
+        }
     },
-    { immediate: true } // Chạy ngay lập tức khi trang vừa được mở lên
+    { immediate: true }
 )
 </script>
 

@@ -5,7 +5,8 @@ import HomeView_2 from '../views/HomeView_2.vue'
 
 
 
-import AdminLayout from '../views/admin/AdminLayout.vue'
+// import AdminLayout from '../views/admin/AdminLayout.vue'
+import AdminLayout from '../components/admin/AdminLayout.vue'
 
 import ExtensionLayout from '../views/extension/ExtensionLayout.vue'
 

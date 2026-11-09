@@ -35,7 +35,7 @@ import AssetLibrarySection from '../components/showcase/asset_gallery/AssetLibra
 import AssetSpecSection from '../components/showcase/asset_spec/AssetSpecSection.vue'
 import ProductionRoadmapSection from '../components/showcase/asset_road_map/ProductionRoadmapSection.vue'
 
-import QuickListSection from '../components/showcase/QuickListSection.vue'
+import QuickListSection from '../components/showcase/asset_quick_list/QuickListSection.vue'
 import FaqAccordionSection from '../components/showcase/FaqAccordionSection.vue'
 import TestimonialSection from '../components/showcase/TestimonialSection.vue'
 import ContactSection from '../components/showcase/ContactSection.vue'
