@@ -215,7 +215,7 @@
                 @click="goToPackDetail(currentPack)"
                 class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-[#ffe600] text-white hover:text-black text-xs font-black transition-all shadow-lg shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <span>Khám phá Pack</span>
+                <span>Explore Pack</span>
                 <span>→</span>
               </button>
             </div>

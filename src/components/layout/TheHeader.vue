@@ -116,6 +116,8 @@
 
         </div>
 
+        <h3>This website is under development. Some features may not work as expected.</h3>
+
         <!-- <PageScrollProgressBar/> -->
     </header>
 </template>

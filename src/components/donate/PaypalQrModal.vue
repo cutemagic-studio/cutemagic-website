@@ -36,11 +36,11 @@
           <!-- Khung hiển thị ảnh QR PayPal --> 
           <div class="relative mx-auto w-60 h-60 p-4 rounded-3xl bg-white border-4 border-[#00457c] shadow-xl flex items-center justify-center group">
             <!-- BẠN CÓ THỂ THAY ĐƯỜNG DẪN ẢNH QR PAYPAL CỦA BẠN VÀO PROP qrImageUrl -->
-            <img
+            <!-- <img
               :src="qrImageUrl"
               alt="Cute Magic PayPal QR Code"
               class="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-            />
+            /> -->
             <span class="absolute -bottom-3 px-3 py-0.5 rounded-full bg-[#ffe600] text-black border-2 border-[#1C1C1C] text-[10px] font-black uppercase tracking-wider shadow">
               Scan to Support
             </span>
