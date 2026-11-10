@@ -69,6 +69,7 @@ onBeforeRouteLeave((to, _from, next) => {
 
 // 2. Khi quay trở lại HomeView: Khôi phục ngay về đúng vị trí trong Section đó
 onMounted(async () => {
+    console.log('onMounted')
     await nextTick()
     restoreHomeScrollPosition()
 })

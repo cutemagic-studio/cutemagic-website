@@ -57,7 +57,8 @@ const routes = [
 
 const router = createRouter({
     // Base này giúp khi bạn deploy lên GitHub Pages hoặc thư mục con nó không bị lỗi /// createWebHashHistory
-    history: createWebHistory('/cutemagic-website/'),
+    history: createWebHistory(import.meta.env.BASE_URL), 
+    // history: createWebHistory('/cutemagic-website/'),
     // history: createWebHashHistory('/cutemagic-website/'),
     routes,
 

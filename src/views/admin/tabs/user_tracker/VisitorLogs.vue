@@ -16,7 +16,7 @@
             <p class="text-xl font-black text-emerald-500">{{ logsToday }}</p>
           </div>
         </div>
-      </div>
+      </div> 
 
       <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
         <div class="md:col-span-2 relative">
@@ -156,7 +156,7 @@ onMounted(() => {
   })
 })
 
-// Thống kê truy cập hôm nay
+// Thống kê truy cập hôm nay 
 const logsToday = computed(() => {
   const today = new Date().toDateString()
   return allLogs.value.filter(log => new Date(log.timestamp).toDateString() === today).length
