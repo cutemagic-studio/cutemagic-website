@@ -377,31 +377,36 @@ const handleUnlock = async () => {
   isVerifying.value = true
   errorMsg.value = ''
 
-  const isValid = await verifyAdminPassword(passwordInput.value)
-  isVerifying.value = false
+  try {
+    const isValid = await verifyAdminPassword(passwordInput.value)
 
-  if (isValid) {
-    isAuthenticated.value = true
-    passwordInput.value = ''
-    failedAttempts.value = 0
-    activityStore.initRealtimeActivityStream()
-  } else {
-    failedAttempts.value++
-    passwordInput.value = ''
-    
-    if (failedAttempts.value >= 5) {
-      lockoutRemaining.value = 30
-      const timer = setInterval(() => {
-        lockoutRemaining.value--
-        if (lockoutRemaining.value <= 0) {
-          clearInterval(timer)
-          failedAttempts.value = 0
-          errorMsg.value = ''
-        }
-      }, 1000)
+    if (isValid) {
+      isAuthenticated.value = true
+      passwordInput.value = ''
+      failedAttempts.value = 0
+      activityStore.initRealtimeActivityStream()
     } else {
-      errorMsg.value = `Mật khẩu không chính xác! (Còn ${5 - failedAttempts.value} lần thử)`
+      failedAttempts.value++
+      passwordInput.value = ''
+
+      if (failedAttempts.value >= 5) {
+        lockoutRemaining.value = 30
+        const timer = setInterval(() => {
+          lockoutRemaining.value--
+          if (lockoutRemaining.value <= 0) {
+            clearInterval(timer)
+            failedAttempts.value = 0
+            errorMsg.value = ''
+          }
+        }, 1000)
+      } else {
+        errorMsg.value = `Mật khẩu không chính xác! (Còn ${5 - failedAttempts.value} lần thử)`
+      }
     }
+  } catch (err) {
+    errorMsg.value = 'Đã xảy ra lỗi khi xác thực. Vui lòng thử lại!'
+  } finally {
+    isVerifying.value = false
   }
 }
 

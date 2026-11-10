@@ -1,37 +1,40 @@
 <template>
-  <div @click="goToDetail"
-    :class="[theme.ui.assetCard]">
+  <div @click="goToDetail" :class="[theme.ui.assetCard, 'cursor-pointer']">
 
     <!-- Image Area (Relative for absolute positioning inside) -->
     <div class="relative group shrink-0">
 
       <!-- Thumbnail Image -->
       <div class="aspect-[4/3] w-full overflow-hidden">
-        <img :src="asset?.media?.cover" :alt="asset.title"
+        <img :src="asset?.media?.cover" :alt="asset?.title"
           class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" />
       </div>
 
       <!-- Top Right Badge (Model Count) -->
-      <div v-if="asset.modelCount"
-        class="absolute top-0 right-0 bg-[#ffe600] text-black text-[11px] sm:text-xs font-black px-2 py-1 uppercase tracking-tight custom-round">
-        {{ asset.modelCount }} Models!
+      <div v-if="modelCount > 0"
+        class="absolute top-0 right-0 bg-[#ffe600] text-black text-[11px] sm:text-xs font-black px-2 py-1 uppercase tracking-tight custom-round z-10">
+        {{ modelCount }} Models!
       </div>
 
-      <!-- Bottom Overlays (Sub-title & Category) -->
+      <!-- Bottom Overlays (Category) -->
       <div class="absolute bottom-0 w-full flex flex-col">
-        
         <div
           class="bg-[#ffe600] text-black text-center font-black uppercase tracking-widest py-1.5 text-[10px] sm:text-xs">
-          {{ asset.categoryId }}
+          {{ asset?.categoryId }}
         </div>
       </div>
 
       <!-- Action Pill (Cart & Heart) - Hiển thị khi Hover -->
       <div
-        class="absolute left-1/2 -translate-x-1/2 bottom-6 bg-[#161616] rounded-full flex items-center px-5 py-2.5 gap-5 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-gray-700 z-10">
+        class="absolute left-1/2 -translate-x-1/2 bottom-6 bg-[#161616]/95 rounded-full flex items-center px-5 py-2.5 gap-5 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-gray-700 z-20">
 
-        <!-- Add to Cart Button -->
-        <button @click.stop="addToCart" class="text-white hover:text-[#ffe600] transition-colors" title="Add to Cart">
+        <!-- Quick Store / Detail Button -->
+        <button 
+          type="button"
+          @click.stop="handleQuickStoreAction" 
+          class="text-white hover:text-[#ffe600] transition-colors cursor-pointer" 
+          :title="asset?.isFree ? 'Tải xuống miễn phí' : 'Mở nhanh Cửa hàng / Chi tiết'"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
             class="w-5 h-5">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -42,11 +45,22 @@
         <!-- Divider Line -->
         <div class="w-px h-4 bg-gray-600"></div>
 
-        <!-- Wishlist Button -->
-        <button @click.stop="addToWishlist" class="text-white hover:text-[#e11d48] transition-colors"
-          title="Add to Wishlist">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-            class="w-5 h-5">
+        <!-- Wishlist Button (Đồng bộ Pinia & Firebase) -->
+        <button 
+          type="button"
+          @click.stop="toggleWishlist" 
+          class="transition-transform active:scale-90 cursor-pointer"
+          :class="isLiked ? 'text-[#ff005b]' : 'text-white hover:text-[#ff005b]'"
+          :title="isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            :fill="isLiked ? 'currentColor' : 'none'" 
+            viewBox="0 0 24 24" 
+            stroke-width="2" 
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
@@ -59,7 +73,7 @@
     <!-- Text Details Area -->
     <div class="px-2 py-2 flex flex-col flex-1 bg-[#1e1e1e]">
       <h3 :class="[theme.ui.assetCardTitle]">
-        {{ asset.title }}
+        {{ asset?.title }}
       </h3>
 
       <div class="mt-auto pt-2 flex justify-center w-full">
@@ -71,46 +85,54 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-
 import { useThemeStore } from '../../../../../stores/useThemeStore.js'
+import { useAssetStore } from '../../../../../stores/useAssetStore.js'
 
 import AssetPriceTag from './AssetPriceTag.vue'
 
 const router = useRouter()
 const theme = useThemeStore()
+const assetStore = useAssetStore()
 
-// Định nghĩa Props nhận từ component cha (AssetGallery)
 const props = defineProps({
   asset: {
     type: Object,
     required: true,
-    default: () => ({
-      id: 1,
-      image: 'https://via.placeholder.com/400x300',
-      modelCount: 879,
-      series: 'APARTMENT INTERIOR & EXTERIOR',
-      category: 'LOW POLY ASSETS',
-      title: 'Low Poly Apartment Interior & Exterior',
-      price: '49.99'
-    })
+    default: () => ({})
   }
 })
 
-// Các hàm xử lý sự kiện
+const modelCount = computed(() => {
+  return Number(props.asset?.techSpecs?.modelCount ?? props.asset?.modelCount ?? 0)
+})
+
+const isLiked = computed(() => {
+  if (!props.asset?.id) return false
+  return assetStore.isFavorite(props.asset.id)
+})
+
 const goToDetail = () => {
-  router.push({ name: 'AssetDetailView', params: { id: props.asset.id } })
+  if (props.asset?.id) {
+    router.push({ name: 'AssetDetailView', params: { id: props.asset.id } })
+  }
 }
 
-const addToCart = () => {
-  console.log('Đã thêm vào giỏ hàng:', props.asset.title)
-  // Gọi action của Store Pinia tại đây
+const toggleWishlist = () => {
+  if (props.asset?.id) {
+    assetStore.toggleFavorite(props.asset.id)
+  }
 }
 
-const addToWishlist = () => {
-  console.log('Đã thêm vào yêu thích:', props.asset.title)
-  // Gọi API hoặc Store tại đây
+const handleQuickStoreAction = () => {
+  const links = props.asset?.links || {}
+  const targetUrl = links.unity || links.fab || links.itch || links.cgtrader
+  if (targetUrl) {
+    window.open(targetUrl, '_blank')
+  } else {
+    goToDetail()
+  }
 }
 </script>
 

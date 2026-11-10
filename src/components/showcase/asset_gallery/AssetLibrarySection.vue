@@ -278,12 +278,15 @@ const goToAllAssets = () => {
 </script> -->
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAssetStore } from '../../../stores/useAssetStore.js' // Thay đường dẫn theo dự án của bạn
 import { useThemeStore } from '../../../stores/useThemeStore.js'
 import AssetCard from '../../../views/pages/assets/asset_detail/child_components/AssetCard.vue'
+
+import { loadGalleryFilterState, saveGalleryFilterState } from '../../../utils/scrollMemory'
 
 const router = useRouter()
 const assetStore = useAssetStore()
@@ -291,6 +294,11 @@ const theme = useThemeStore()
 
 // Lấy mảng dữ liệu từ Store
 const { assets } = storeToRefs(assetStore)
+
+// 1. Khởi tạo số trang & danh mục từ bộ nhớ phiên (Thay vì mặc định luôn là 1 và 'all')
+const savedGalleryState = loadGalleryFilterState()
+const currentPage = ref(savedGalleryState.page || 1)
+const selectedCategory = ref(savedGalleryState.category || 'all')
 
 // === LOGIC THỐNG KÊ (Cho 3 ô vuông) ===
 const stats = computed(() => assetStore.getStatistics)
@@ -334,7 +342,7 @@ const displayCategories = computed(() => {
 
 const selectedCategoryId = ref('all')
 const itemsPerPage = 12
-const currentPage = ref(1)
+// const currentPage = ref(1)
 
 // Lọc Asset
 const filteredAssets = computed(() => {
@@ -371,6 +379,14 @@ const goToPage = (page) => {
 const goToAllAssets = () => {
     router.push({ name: 'AssetLibrary' })
 }
+
+// 2. Tự động lưu lại mỗi khi người dùng chuyển trang (1, 2, 3, 4) hoặc đổi danh mục
+watch([currentPage, selectedCategory], ([newPage, newCat]) => {
+  saveGalleryFilterState({
+    page: newPage,
+    category: newCat
+  })
+})
 </script>
 
 <style scoped>

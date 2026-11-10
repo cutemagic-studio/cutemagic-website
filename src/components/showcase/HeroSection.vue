@@ -79,7 +79,7 @@
           <HeroFeaturedGallery />
 
           <!-- [GLASSMORPHISM] Thẻ nổi (Floating Card: Verified By Unity Partner) -->
-          <div class=" -bottom-5 -left-2 sm:-left-6 bg-white/90 dark:bg-[#161a23]/90 backdrop-blur-xl px-4 py-3.5 rounded-2xl shadow-2xl border-2 border-[#1C1C1C] dark:border-white/15 hidden sm:flex items-center gap-3.5 animate-float transition-colors z-30 pointer-events-none">
+          <div class="mt-4 -bottom-5 -left-2 sm:-left-6 bg-white/90 dark:bg-[#161a23]/90 backdrop-blur-xl px-4 py-3.5 rounded-2xl shadow-2xl border-2 border-[#1C1C1C] dark:border-white/15 hidden sm:flex items-center gap-3.5 animate-float transition-colors z-30 pointer-events-none">
             <div class="w-10 h-10 bg-blue-600 border-2 border-[#1C1C1C] dark:border-transparent rounded-xl flex items-center justify-center shadow-lg">
               <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

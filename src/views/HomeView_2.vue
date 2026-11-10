@@ -5,7 +5,7 @@
         <TheHeader />
 
         <main class="flex-grow">
-            <div id="HeroSection"><HeroSection /></div>
+            <!-- <div id="HeroSection"><HeroSection /></div>
             <div id="RecentlyViewedSection"><RecentlyViewedSection /></div>
             <div id="WhyChooseUsSection"><WhyChooseUsSection /></div>
             <div id="AssetLibrarySection"><AssetLibrarySection /></div>
@@ -15,7 +15,19 @@
             <div id="TestimonialSection"><TestimonialSection /></div>
             <div id="FaqAccordionSection"><FaqAccordionSection /></div>
             <div id="FavoriteAssetsSection"><FavoriteAssetsSection /></div>
-            <div id="ContactSection"><ContactSection /></div>
+            <div id="ContactSection"><ContactSection /></div> -->
+
+            <div><HeroSection /></div>
+            <div><RecentlyViewedSection /></div>
+            <div><WhyChooseUsSection /></div>
+            <div><AssetLibrarySection /></div>
+            <div><AssetSpecSection /></div>
+            <div><ProductionRoadmapSection /></div>
+            <div><QuickListSection /></div>
+            <div><TestimonialSection /></div>
+            <div><FaqAccordionSection /></div>
+            <div><FavoriteAssetsSection /></div>
+            <div><ContactSection /></div>
         </main>
 
         <TheFooter />

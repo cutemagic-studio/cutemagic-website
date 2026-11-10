@@ -13,7 +13,7 @@
       >
         <span class="w-1.5 h-1.5 rounded-full bg-[#00EE76] animate-pulse"></span>
         <span class="text-[9px] font-black uppercase tracking-wider text-slate-300 group-hover:text-[#ffe600]">
-          {{ isOpen ? 'Ẩn thanh' : (currentSection?.label || 'Mục lục') }}
+          {{ isOpen ? 'Hide' : (currentSection?.label || 'Catalogue') }}
         </span>
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
@@ -248,7 +248,8 @@ const scrollToIndex = (targetIdx) => {
   const el = document.getElementById(targetSec.id)
   if (!el) return
 
-  const headerOffset = 68
+//   const headerOffset = 68
+    const headerOffset = 20
   const topPos = Math.max(0, el.getBoundingClientRect().top + window.scrollY - headerOffset)
   smoothScrollToY(topPos, 680)
 }
