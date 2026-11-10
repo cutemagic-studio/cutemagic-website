@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="data:,">
     <title>CuteMagic</title>
+
+    <script>
+      (function () {
+        var search = window.location.search;
+
+        if (search.startsWith('?/')) {
+          var decoded = search
+            .slice(2)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?'); 
+
+          var base = '/cutemagic-website';
+
+          window.history.replaceState(
+            null,
+            '',
+            base + '/' + decoded.replace(/^\//, '') +
+            window.location.hash
+          );
+        }
+      })();
+    </script>
+
     <script type="module" crossorigin src="/cutemagic-website/static/index-BCod9HDh.js"></script>
     <link rel="stylesheet" crossorigin href="/cutemagic-website/static/index-wgK6xJZM.css">
   </head>
