@@ -273,6 +273,7 @@ import DashboardTab from './tabs/Dashboard.vue'
 import VisitorLogsTab from './tabs/user_tracker/VisitorLogs.vue'
 import AssetManagerTab from './tabs/asset_manager/AssetManager.vue'
 import ActivityNotificationsTab from './tabs/activity_notifications/ActivityNotificationsManager.vue'
+import HeroShowcaseTab from './tabs/hero_showcase/HeroShowcaseManager.vue'
 
 import { isAdminAuthenticated, verifyAdminPassword, logoutAdmin } from '../../utils/adminAuth'
 import { useActivityNotificationStore } from '../../stores/useActivityNotificationStore'
@@ -337,8 +338,17 @@ const tabs = [
     icon: '📦', 
     badge: 'CMS',
     component: markRaw(AssetManagerTab) 
-  }
-]
+  },
+  
+  { 
+    id: 'hero_showcase', 
+    name: 'Hero Showcase', 
+    subtitle: 'Quản lý tham số mảng ID các Asset Pack nổi bật và thứ tự trình chiếu tại Hero Section.',
+    icon: '🌟', 
+    badge: 'Hero',
+    component: markRaw(HeroShowcaseTab) 
+  },
+] 
 
 const activeTab = ref(tabs[0])
 

@@ -32,7 +32,8 @@ export const useAssetStore = defineStore('assetStore', {
     deletedAssets: [],
     // Bản đồ lưu trữ các Bản ghi song song (Parallel Backups) theo ID: { [id]: backupRecord }
     backupMap: {},
-
+    // Tham số mảng lưu danh sách ID các Asset Pack hiển thị ở Hero Section
+    heroFeaturedIds: loadIdsFromStorage('cmg_hero_featured_ids_cache'),
     isFirebaseSynced: false,
     isLoadingFirebase: false,
     recentlyViewedIds: loadIdsFromStorage(RECENTLY_VIEWED_KEY),

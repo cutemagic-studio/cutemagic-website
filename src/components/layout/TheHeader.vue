@@ -115,6 +115,8 @@
             </div>
 
         </div>
+
+        <!-- <PageScrollProgressBar/> -->
     </header>
 </template>
 
@@ -129,6 +131,7 @@ import { useTheme } from '../../composables/useTheme'
 
 import AssetLibraryMegaMenu from './AssetLibraryMegaMenu.vue'
 import MegaMenuResources from './MegaMenuResources.vue'
+import PageScrollProgressBar from './PageScrollProgressBar.vue'
 
 const router = useRouter()
 const theme = useThemeStore()

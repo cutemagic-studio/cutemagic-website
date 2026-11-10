@@ -17,6 +17,9 @@ export const MAX_RECENT_ITEMS = 20
 export const MAX_FAVORITE_ITEMS = 50
 export const DISPLAY_LIMIT = 12
 
+export const HERO_FEATURED_IDS_KEY = 'cmg_hero_featured_ids_cache'
+export const FIREBASE_HERO_CONFIG_PATH = 'cmg_config/hero_featured_ids'
+
 // ==========================================
 // 2. HELPER ĐỌC / GHI LOCAL STORAGE AN TOÀN
 // ==========================================

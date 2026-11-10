@@ -52,6 +52,20 @@ export const firebaseAdminGetters = {
   // Lấy thông tin chi tiết bản ghi song song của 1 Asset Pack
   getParallelBackup: (state) => {
     return (assetId) => state.backupMap?.[Number(assetId)] || null
+  },
+
+  // Trả về danh sách các Pack hiển thị ở Hero Section theo ĐÚNG THỨ TỰ trong mảng heroFeaturedIds
+  heroFeaturedAssets: (state) => {
+    const activeMap = new Map((state.assets || []).map(a => [Number(a.id), a]))
+    const orderedFromConfig = (state.heroFeaturedIds || [])
+      .map(id => activeMap.get(Number(id)))
+      .filter(Boolean)
+
+    if (orderedFromConfig.length > 0) return orderedFromConfig
+
+    // Fallback nếu mảng cấu hình chưa được thiết lập: Lấy các Pack có bật cờ isFeatured hoặc 5 Pack mới nhất
+    const flagged = (state.assets || []).filter(a => a.flags?.isFeatured)
+    return flagged.length > 0 ? flagged.slice(0, 6) : (state.assets || []).slice(0, 5)
   }
 }
 
@@ -70,6 +84,19 @@ export const firebaseAdminActions = {
 
     const assetsRef = dbRef(db, FIREBASE_ASSETS_PATH)
     const backupsRef = dbRef(db, FIREBASE_ASSETS_BACKUP_PATH)
+
+    // --- Thêm đoạn lắng nghe này vào đầu hàm initFirebaseAssetsSync() ---
+    const heroConfigRef = dbRef(db, 'cmg_config/hero_featured_ids')
+    onValue(heroConfigRef, (snap) => {
+      const val = snap.val()
+      if (Array.isArray(val)) {
+        const cleanIds = val.map(Number).filter(id => !isNaN(id) && id > 0)
+        this.heroFeaturedIds = cleanIds
+        localStorage.setItem('cmg_hero_featured_ids_cache', JSON.stringify(cleanIds))
+      } else {
+        this.heroFeaturedIds = []
+      }
+    })
 
     // 1. Lắng nghe nhánh Bản ghi song song (Parallel Backup)
     onValue(backupsRef, (snap) => {
@@ -377,5 +404,16 @@ export const firebaseAdminActions = {
     await update(dbRef(db, `${FIREBASE_ASSETS_PATH}/pack_${Number(assetId)}/flags`), {
       [flagKey]: newValue
     })
-  }
+  },
+
+  // --- Thêm Action lưu mảng ID Hero lên Firebase vào firebaseAdminActions ---
+  async saveHeroFeaturedIdsToFirebase(idArray = []) {
+    const cleanIds = Array.from(new Set(
+      (idArray || []).map(Number).filter(id => !isNaN(id) && id > 0)
+    ))
+    await set(dbRef(db, 'cmg_config/hero_featured_ids'), cleanIds)
+    this.heroFeaturedIds = cleanIds
+    localStorage.setItem('cmg_hero_featured_ids_cache', JSON.stringify(cleanIds))
+    return cleanIds
+  },
 }
