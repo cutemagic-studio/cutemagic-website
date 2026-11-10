@@ -9,7 +9,7 @@
         type="button"
         @click="toggleDock"
         class="pointer-events-auto group relative flex items-center gap-1.5 px-3 py-1 rounded-t-xl bg-[#131722]/90 hover:bg-[#1e1e1e] backdrop-blur-xl border-t border-x border-white/15 hover:border-[#ffe600] text-white shadow-[0_-4px_15px_rgba(0,0,0,0.5)] transition-all cursor-pointer"
-        :title="isOpen ? 'Thu gọn thanh điều hướng' : 'Mở thanh điều hướng Section'"
+        :title="isOpen ? 'Collapse navigation' : 'Expand navigation'"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-[#00EE76] animate-pulse"></span>
         <span class="text-[9px] font-black uppercase tracking-wider text-slate-300 group-hover:text-[#ffe600]">
@@ -39,7 +39,7 @@
           :disabled="activeIndex <= 0"
           @click="goToPrevSection"
           class="z-30 w-7 h-7 rounded-lg bg-white/5 hover:bg-[#ffe600] text-slate-200 hover:text-black disabled:opacity-20 disabled:pointer-events-none border border-white/10 hover:border-black flex items-center justify-center text-xs font-black transition-all shrink-0 cursor-pointer"
-          title="Section trước đó"
+          title="Previous section"
         >
           ❮
         </button>
@@ -92,7 +92,7 @@
           :disabled="activeIndex >= availableSections.length - 1"
           @click="goToNextSection"
           class="z-30 w-7 h-7 rounded-lg bg-white/5 hover:bg-[#ffe600] text-slate-200 hover:text-black disabled:opacity-20 disabled:pointer-events-none border border-white/10 hover:border-black flex items-center justify-center text-xs font-black transition-all shrink-0 cursor-pointer"
-          title="Section tiếp theo"
+          title="Next section"
         >
           ❯
         </button>

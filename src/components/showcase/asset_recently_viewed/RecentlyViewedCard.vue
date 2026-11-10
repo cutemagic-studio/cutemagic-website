@@ -32,7 +32,7 @@
                     type="button"
                     @click.stop="handleQuickStoreAction" 
                     class="text-white hover:text-[#ffe600] transition-colors cursor-pointer"
-                    title="Mở nhanh Cửa hàng / Chi tiết"
+                    title="Quick Store / View Details"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                         stroke="currentColor" class="w-4 h-4">
@@ -46,7 +46,7 @@
                     @click.stop="toggleWishlist" 
                     class="transition-transform active:scale-90 cursor-pointer"
                     :class="isLiked ? 'text-[#ff005b]' : 'text-white hover:text-[#ff005b]'"
-                    :title="isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'"
+                    :title="isLiked ? 'Unfavorite' : 'Add to favorites'"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" :fill="isLiked ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke-width="2"
                         stroke="currentColor" class="w-4 h-4">

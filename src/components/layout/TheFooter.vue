@@ -19,14 +19,14 @@
 
       <div>
         <h4 class="text-white font-semibold mb-4">Connect with us</h4>
-        <div class="flex space-x-4">
+        <div class="flex space-x-4"> 
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">FB</a>
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">X</a>
           <a href="#" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition">GH</a>
         
-          <a href="https://cutemagic-studio.github.io/cutemagic-website/favicon.svg" download>Tải Favicon</a>
+          <!-- <a href="https://cutemagic-studio.github.io/cutemagic-website/favicon.svg" download>Tải Favicon</a> -->
           <!-- https://github.com/vantan-15081998/cmg_asset_drive/blob/main/test/env_123456/pack_01_test/pack_01_test.zip -->
-          <a href="https://vantan-15081998.github.io/cmg_asset_drive/test/env_123456/pack_01_test/pack_01_test.zip" download>Tải Favicon</a>
+          <!-- <a href="https://vantan-15081998.github.io/cmg_asset_drive/test/env_123456/pack_01_test/pack_01_test.zip" download>Tải Favicon</a> -->
         </div> 
       </div>
     </div>

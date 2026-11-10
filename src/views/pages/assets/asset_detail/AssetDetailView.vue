@@ -92,7 +92,7 @@
                             <!-- Nút này được bo viền tròn, đổ bóng nhẹ, đổi màu hồng rực rỡ khi được bấm (isLiked) -->
                             <button 
                                 @click="assetStore.toggleFavorite(currentAsset?.id)"
-                                :title="isLiked ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'"
+                                :title="isLiked ? 'Unfavorite' : 'Add to favorites'"
                                 :class="[
                                     'shrink-0 flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 cursor-pointer active:scale-90',
                                     isLiked 

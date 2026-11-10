@@ -16,7 +16,7 @@
       type="button"
       @click="prevPack"
       class="absolute -left-4 sm:-left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#161a23]/95 hover:bg-[#ffe600] text-white hover:text-black border-2 border-slate-700 hover:border-black shadow-2xl flex items-center justify-center text-lg font-black transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
-      title="Xem Pack nổi bật trước đó"
+      title="Previous pack"
     >
       ❮
     </button>
@@ -26,7 +26,7 @@
       type="button"
       @click="nextPack"
       class="absolute -right-4 sm:-right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#161a23]/95 hover:bg-[#ffe600] text-white hover:text-black border-2 border-slate-700 hover:border-black shadow-2xl flex items-center justify-center text-lg font-black transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
-      title="Xem Pack nổi bật tiếp theo"
+      title="Next pack"
     >
       ❯
     </button>
