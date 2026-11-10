@@ -170,29 +170,36 @@
                     </div>
                 </div>
 
-                <!-- TAB 3: NỘI DUNG MÔ TẢ (CONTENT) -->
-                <div v-if="activeModalTab === 'content'" class="space-y-4">
+                <!-- TAB 3: NỘI DUNG MÔ TẢ (CONTENT - ĐÃ NÂNG CẤP RICH TEXT EDITOR) -->
+                <div v-if="activeModalTab === 'content'" class="space-y-5">
                     <div>
-                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">Mô tả ngắn (Short Description - Hiển thị ở Card)</label>
+                        <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
+                            Mô tả ngắn (Short Description - Hiển thị ở Card & Đầu trang Chi tiết)
+                        </label>
                         <input v-model="formData.content.shortDescription" type="text"
                             class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2.5 text-xs font-bold" />
                     </div>
 
                     <div>
                         <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
-                            Mô tả chi tiết (Full Description - Mỗi đoạn văn 1 dòng)
+                            📝 Mô tả chi tiết (Description - Hỗ trợ In đậm, Bullet List & Tô màu Highlight)
                         </label>
-                        <textarea v-model="fullDescriptionText" rows="4" placeholder="Nhập mỗi đoạn văn trên 1 dòng..."
-                            class="w-full border-2 border-[#8470FF] rounded-xl p-3.5 text-xs font-medium leading-relaxed"></textarea>
+                        <RichTextEditor
+                            v-model="fullDescriptionText"
+                            min-height="220px"
+                            placeholder="Nhập nội dung Description (VD: Key Highlights, Key Features, Compatibility...)"
+                        />
                     </div>
 
                     <div>
                         <label class="block text-[12px] font-bold uppercase text-[#363636] mb-1.5">
-                            Danh sách Tính năng nổi bật (Features - Mỗi gạch đầu dòng 1 dòng)
+                            ⚙️ Chi tiết Kỹ thuật & Tính năng (Technical Details / Features - Hỗ trợ Rich Text)
                         </label>
-                        <textarea v-model="featuresText" rows="5"
-                            placeholder="65 mô hình thực vật đa dạng...&#10;Tối ưu hóa hoàn hảo cho Mobile & URP..."
-                            class="w-full border-2 border-[#8470FF] rounded-xl p-3.5 text-xs font-bold leading-relaxed"></textarea>
+                        <RichTextEditor
+                            v-model="featuresText"
+                            min-height="180px"
+                            placeholder="Nhập nội dung Technical Details hoặc danh sách tính năng..."
+                        />
                     </div>
                 </div>
 
@@ -541,6 +548,8 @@ import { getTodayDateString } from '../../../../../stores/useAssetStore'
 import { useNotificationStore } from '../../../../../stores/useNotificationStore'
 import { CmgAssetModel } from '../../../../../models/cmg/Cmg_AssetModel'
 
+import RichTextEditor from './RichTextEditor.vue'
+
 const props = defineProps({
     show: { type: Boolean, default: false },
     isEditMode: { type: Boolean, default: false },
@@ -609,13 +618,33 @@ watch(
 
             formData.value = cloned
             tagsTextInput.value = (formData.value.tags || []).join(', ')
-            fullDescriptionText.value = (formData.value.content?.fullDescription || []).join('\n')
-            featuresText.value = (formData.value.content?.features || []).join('\n')
+
+            // fullDescriptionText.value = (formData.value.content?.fullDescription || []).join('\n')
+            // featuresText.value = (formData.value.content?.features || []).join('\n')
+            // [CẬP NHẬT 2 DÒNG NÀY ĐỂ ĐỌC RICH TEXT]:
+            fullDescriptionText.value = arrayToRichHtml(formData.value.content?.fullDescription)
+            featuresText.value = arrayToRichHtml(formData.value.content?.features)
+
             galleryText.value = (formData.value.media?.gallery || []).join('\n')
         }
     },
     { immediate: true, deep: true }
 )
+
+// Hàm tự động chuyển mảng chuỗi cũ (nếu có) thành HTML cho RichTextEditor
+const arrayToRichHtml = (arrOrStr) => {
+    if (!arrOrStr) return ''
+    if (typeof arrOrStr === 'string') return arrOrStr
+    if (Array.isArray(arrOrStr)) {
+        // Nếu phần tử đầu tiên đã là mã HTML do RichTextEditor lưu -> trả về nguyên bản
+        if (arrOrStr.length === 1 && /<[a-z][\s\S]*>/i.test(arrOrStr[0])) {
+            return arrOrStr[0]
+        }
+        // Nếu là dữ liệu cũ (mỗi dòng 1 phần tử) -> bọc thành các thẻ <p>
+        return arrOrStr.map(line => `<p>${line}</p>`).join('')
+    }
+    return ''
+}
 
 // ============================================================================
 // [YÊU CẦU 1]: XÁC NHẬN TRƯỚC KHI ĐÓNG POPUP (KHÔNG CHO ĐÓNG KHI CLICK NỀN ĐEN)
@@ -843,8 +872,13 @@ const onSubmit = () => {
 
     const payload = JSON.parse(JSON.stringify(formData.value))
     payload.tags = tagsTextInput.value.split(',').map(s => s.trim()).filter(Boolean)
-    payload.content.fullDescription = fullDescriptionText.value.split('\n').map(s => s.trim()).filter(Boolean)
-    payload.content.features = featuresText.value.split('\n').map(s => s.trim()).filter(Boolean)
+
+    // payload.content.fullDescription = fullDescriptionText.value.split('\n').map(s => s.trim()).filter(Boolean)
+    // payload.content.features = featuresText.value.split('\n').map(s => s.trim()).filter(Boolean)
+    // [CẬP NHẬT 2 DÒNG NÀY ĐỂ LƯU NGUYÊN VẸN MÃ HTML TỪ RICH TEXT EDITOR]:
+    payload.content.fullDescription = fullDescriptionText.value?.trim() ? [fullDescriptionText.value.trim()] : []
+    payload.content.features = featuresText.value?.trim() ? [featuresText.value.trim()] : []
+
     payload.media.gallery = galleryText.value.split('\n').map(s => s.trim()).filter(Boolean)
 
     // Đảm bảo bảo toàn ID khi sửa

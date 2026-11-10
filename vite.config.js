@@ -10,6 +10,7 @@ export default defineConfig({
   ],
   base: '/cutemagic-website/', // 👈 tên repo của bạn
   build: {
-    outDir: 'docs'
+    outDir: 'docs',
+    assetsDir: 'static',
   },
 })
