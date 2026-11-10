@@ -30,10 +30,10 @@
         <!-- Nội dung chính chứa Mã QR -->
         <div class="p-6 text-center space-y-5">
           <p class="text-xs font-medium text-gray-600 dark:text-gray-300 leading-relaxed">
-            Mở ứng dụng <strong>PayPal</strong> hoặc <strong>Camera</strong> trên điện thoại của bạn và quét mã QR bên dưới để ủng hộ kinh phí phát triển các bộ 3D Asset mới cho <strong>Cute Magic</strong>.
+            Open the <strong>PayPal</strong> app or your phone's <strong>Camera</strong> and scan the QR code below to support the creation of new 3D asset packs at <strong>Cute Magic</strong>.
           </p>
 
-          <!-- Khung hiển thị ảnh QR PayPal -->
+          <!-- Khung hiển thị ảnh QR PayPal --> 
           <div class="relative mx-auto w-60 h-60 p-4 rounded-3xl bg-white border-4 border-[#00457c] shadow-xl flex items-center justify-center group">
             <!-- BẠN CÓ THỂ THAY ĐƯỜNG DẪN ẢNH QR PAYPAL CỦA BẠN VÀO PROP qrImageUrl -->
             <img
