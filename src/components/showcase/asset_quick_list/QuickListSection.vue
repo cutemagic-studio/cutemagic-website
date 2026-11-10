@@ -30,7 +30,7 @@
           <div class="space-y-4">
             <!-- Xử lý nếu chưa có data -->
             <div v-if="!col.items || col.items.length === 0" class="text-center py-4 text-sm text-gray-500">
-              {{ isLoadingFirebase ? 'Đang tải dữ liệu từ Firebase...' : 'Chưa có dữ liệu...' }}
+              {{ isLoadingFirebase ? 'Loading data...' : 'No data available...' }}
             </div>
 
             <!-- NHÚNG COMPONENT ASSET QUICK LIST CARD -->
