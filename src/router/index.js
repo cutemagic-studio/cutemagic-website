@@ -73,7 +73,7 @@ const router = createRouter({
     // }
 
     scrollBehavior(to, from, savedPosition) {
-    // 1. Nếu có hash neo (VD: #WhyChooseUsSection)
+    // 1. Nếu có hash neo (VD: #WhyChooseUsSection) 
     if (to.hash) {
       return { el: to.hash, behavior: 'smooth' }
     }
