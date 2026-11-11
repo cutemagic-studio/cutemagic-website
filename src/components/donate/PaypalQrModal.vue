@@ -36,18 +36,18 @@
           <!-- Khung hiển thị ảnh QR PayPal --> 
           <div class="relative mx-auto w-60 h-60 p-4 rounded-3xl bg-white border-4 border-[#00457c] shadow-xl flex items-center justify-center group">
             <!-- BẠN CÓ THỂ THAY ĐƯỜNG DẪN ẢNH QR PAYPAL CỦA BẠN VÀO PROP qrImageUrl -->
-            <!-- <img
+            <img
               :src="qrImageUrl"
               alt="Cute Magic PayPal QR Code"
               class="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-            /> -->
+            />
             <span class="absolute -bottom-3 px-3 py-0.5 rounded-full bg-[#ffe600] text-black border-2 border-[#1C1C1C] text-[10px] font-black uppercase tracking-wider shadow">
               Scan to Support
             </span>
           </div>
 
           <!-- Thông tin tài khoản nhận -->
-          <div class="bg-gray-100 dark:bg-[#0f131d] p-3.5 rounded-2xl border border-gray-200 dark:border-slate-800 space-y-1">
+          <!-- <div class="bg-gray-100 dark:bg-[#0f131d] p-3.5 rounded-2xl border border-gray-200 dark:border-slate-800 space-y-1">
             <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">PayPal Account / Email</p>
             <div class="flex items-center justify-center gap-2">
               <code class="text-xs sm:text-sm font-mono font-black text-[#00457c] dark:text-[#ffe600]">
@@ -61,16 +61,16 @@
                 {{ copied ? '✓ Copied' : 'Copy' }}
               </button>
             </div>
-          </div>
+          </div> -->
 
-          <!-- Nút mở link trực tiếp hoặc đóng -->
+          <!-- Nút mở link trực tiếp hoặc đóng --> 
           <div class="flex items-center gap-3 pt-1">
             <button
               type="button"
               @click="$emit('close')"
               class="flex-1 py-3 rounded-xl border-2 border-gray-300 dark:border-slate-700 text-xs font-black text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              Đóng cửa sổ
+              Close Window
             </button>
             <a
               v-if="paypalLink"
@@ -79,7 +79,7 @@
               rel="noopener noreferrer"
               class="flex-1 py-3 rounded-xl bg-[#00457c] hover:bg-[#003159] text-white text-xs font-black shadow-lg transition-colors text-center"
             >
-              Mở trang PayPal ↗
+              Open PayPal Page ➜
             </a>
           </div>
         </div>
@@ -91,6 +91,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import qrCodeImg from '../../assets/qr/qr-code.png'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -99,7 +100,7 @@ const props = defineProps({
   // Tự động tạo mã QR sắc nét từ đường dẫn PayPal (Hoặc bạn truyền đường dẫn ảnh QR trong máy vào đây)
   qrImageUrl: {
     type: String,
-    default: 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&color=00457c&data=https://www.paypal.com/paypalme/cutemagic'
+    default: qrCodeImg
   }
 })
 

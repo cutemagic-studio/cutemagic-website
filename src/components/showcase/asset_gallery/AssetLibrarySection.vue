@@ -126,7 +126,7 @@
 
             <div v-if="paginatedAssets.length === 0"
                 class="text-center py-20 text-slate-500 dark:text-slate-400 font-bold">
-                Không tìm thấy asset nào trong danh mục này.
+                No assets found in this category.
             </div>
 
             <!-- Grid Sản Phẩm -->
@@ -295,7 +295,7 @@ const theme = useThemeStore()
 // Lấy mảng dữ liệu từ Store
 const { assets } = storeToRefs(assetStore)
 
-// 1. Khởi tạo số trang & danh mục từ bộ nhớ phiên (Thay vì mặc định luôn là 1 và 'all')
+// 1. Khởi tạo số trang & danh mục từ bộ nhớ phiên (Thay vì mặc định luôn là 1 và 'all') 
 const savedGalleryState = loadGalleryFilterState()
 const currentPage = ref(savedGalleryState.page || 1)
 const selectedCategory = ref(savedGalleryState.category || 'all')
