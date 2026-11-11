@@ -116,7 +116,8 @@
 
         </div>
 
-        <h3>This website is under development. Some features may not work as expected.</h3>
+        <!-- <h3>This website is under development. Some features may not work as expected.</h3> --> 
+        <h3>This website is under development. Some features may not work as expected. Official launch is scheduled for November 20, 2026.</h3>
 
         <!-- <PageScrollProgressBar/> -->
     </header>
