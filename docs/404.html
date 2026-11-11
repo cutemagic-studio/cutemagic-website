@@ -1,35 +1,43 @@
-
+<!-- public/404.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
-
+  <title>Cute Magic Studio</title>
+  <style>
+    body {
+      background-color: #0b0e14;
+      color: #94a3b8;
+      font-family: sans-serif;
+      margin: 0;
+    }
+  </style>
   <script>
-    // GitHub Pages SPA fallback
+    // GitHub Pages SPA Fallback (Chuẩn hóa cả Path, Query Search & Hash)
     (function () {
       var base = '/cutemagic-website';
+      var l = window.location;
 
-      var path = window.location.pathname;
-      var search = window.location.search;
-      var hash = window.location.hash;
+      var route = l.pathname.startsWith(base)
+        ? l.pathname.slice(base.length)
+        : l.pathname;
 
-      var route = path.startsWith(base)
-        ? path.slice(base.length)
-        : path;
+      // Chuyển dấu '?' đầu tiên của search thành '&' và các dấu '&' thành '~and~'
+      var encodedSearch = l.search
+        ? '&' + l.search.slice(1).replace(/&/g, '~and~')
+        : '';
 
-      // Chuyển đường dẫn thành query để index.html khôi phục
-      var redirect = base + '/?/' +
-        route.replace(/^\//, '') +
-        search +
-        hash;
+      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        base + '/?/' +
+        route.replace(/^\//, '').replace(/&/g, '~and~') +
+        encodedSearch +
+        l.hash;
 
-      window.location.replace(redirect);
+      l.replace(redirectUrl);
     })();
   </script>
 </head>
 <body>
-  <p>Redirecting to CuteMagic Website...</p>
 </body>
 </html>
