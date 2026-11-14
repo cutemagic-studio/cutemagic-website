@@ -275,6 +275,10 @@ import AssetManagerTab from './tabs/asset_manager/AssetManager.vue'
 import ActivityNotificationsTab from './tabs/activity_notifications/ActivityNotificationsManager.vue'
 import HeroShowcaseTab from './tabs/hero_showcase/HeroShowcaseManager.vue'
 
+// [THÊM MỚI]: Import 2 Tab Quản trị mới
+// import FreeDropManagerTab from './tabs/free_drop/FreeDropManager.vue'
+import LocalRefLibraryTab from './tabs/ref_library/LocalRefLibraryManager.vue'
+
 import { isAdminAuthenticated, verifyAdminPassword, logoutAdmin } from '../../utils/adminAuth'
 import { useActivityNotificationStore } from '../../stores/useActivityNotificationStore'
 import { useThemeStore } from '../../stores/useThemeStore.js'
@@ -339,7 +343,6 @@ const tabs = [
     badge: 'CMS',
     component: markRaw(AssetManagerTab) 
   },
-  
   { 
     id: 'hero_showcase', 
     name: 'Hero Showcase', 
@@ -348,6 +351,22 @@ const tabs = [
     badge: 'Hero',
     component: markRaw(HeroShowcaseTab) 
   },
+  // { 
+  //   id: 'free_drop', 
+  //   name: 'Free Prop Drop', 
+  //   subtitle: 'Quản lý sự kiện tặng mô hình 3D lẻ định kỳ, đồng hồ đếm ngược & liên kết Upsell.',
+  //   icon: '🎁', 
+  //   badge: 'Drop',
+  //   component: markRaw(FreeDropManagerTab) 
+  // },
+  { 
+    id: 'ref_library', 
+    name: 'Kho Ảnh Tham Khảo', 
+    subtitle: 'Phân loại ảnh trực tiếp từ ổ cứng Windows theo Category ảo (Lưu JSON nội bộ) & Đổi tên file.',
+    icon: '🗂️', 
+    badge: 'Local',
+    component: markRaw(LocalRefLibraryTab) 
+  }
 ] 
 
 const activeTab = ref(tabs[0])
@@ -408,7 +427,7 @@ const handleUnlock = async () => {
   } finally {
     isVerifying.value = false
   }
-}
+} 
 
 const handleLockAdmin = () => {
   logoutAdmin()
