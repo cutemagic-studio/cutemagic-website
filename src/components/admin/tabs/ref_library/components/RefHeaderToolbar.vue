@@ -9,17 +9,20 @@
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-[11px] font-black uppercase tracking-widest text-blue-600">
-              Windows Physical Reference Vault
+              Windows Reference Vault • Firebase RTDB
             </span>
             <span
               class="px-2 py-0.5 rounded-md text-[10px] font-mono font-black border"
-              :class="store.isLocalViteServer
+              :class="store.isFirebaseSynced
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                : 'bg-sky-50 text-sky-700 border-sky-300'"
+                : 'bg-amber-50 text-amber-700 border-amber-300'"
             >
-              {{ store.isLocalViteServer
-                ? `✓ Local Disk Sync: src/data/ref_library.json (${store.libraryData.updatedAt || 'Mới'})`
-                : `☁️ GitHub Pages Mode (Đồng bộ Browser & Folder Windows)` }}
+              {{ store.isSavingFirebase
+                ? '⏳ Đang đồng bộ lên Firebase...'
+                : (store.isFirebaseSynced
+                    ? `🔥 Firebase Live: cmg_ref_library (${store.libraryData.updatedAt || 'Mới'})`
+                    : '⏳ Đang kết nối Firebase...')
+              }}
             </span>
           </div>
           <h2 class="text-base sm:text-lg font-black text-slate-900 mt-0.5">
@@ -28,17 +31,19 @@
         </div>
       </div>
 
-      <!-- Cụm nút Backup, Rollback & Xuất JSON -->
+      <!-- Cụm nút Backup, Rollback trên Firebase & Xuất JSON -->
       <div class="flex flex-wrap items-center gap-2">
         <div v-if="store.backupMeta" class="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-[11px] text-amber-900">
-          <span class="font-black">🛡️ Backup:</span>
+          <span class="font-black">🛡️ Firebase Backup:</span>
           <span class="font-mono ml-1">{{ store.backupMeta.updatedAt }}</span>
+          <span class="opacity-75 ml-1">({{ store.backupMeta.backupReason }})</span>
         </div>
 
         <button
           type="button"
           @click="store.handleManualBackup"
           class="px-3.5 py-2 rounded-xl border-2 border-[#8470FF] bg-white hover:bg-blue-50 text-slate-800 text-xs font-black cursor-pointer transition-colors"
+          title="Sao lưu trạng thái hiện tại sang nhánh cmg_ref_library_backup trên Firebase"
         >
           🛡️ Sao lưu Backup
         </button>
@@ -48,19 +53,19 @@
           :disabled="!store.backupMeta"
           @click="store.handleRollbackBackup"
           class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-xs font-black shadow cursor-pointer transition-colors flex items-center gap-1.5"
+          title="Khôi phục dữ liệu từ nhánh cmg_ref_library_backup trên Firebase"
         >
           <span>⏪</span>
           <span>Back lại Version trước</span>
         </button>
 
         <button
-          v-if="!store.isLocalViteServer"
           type="button"
           @click="store.exportJsonFile"
           class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-700 text-[#ffe600] text-xs font-black cursor-pointer"
-          title="Tải file ref_library.json đã cập nhật về máy"
+          title="Xuất bản chụp dữ liệu Firebase hiện tại ra file .json"
         >
-          ⬇️ Tải JSON
+          ⬇️ Xuất JSON
         </button>
       </div>
     </div>
@@ -90,6 +95,18 @@
       </div>
 
       <div class="lg:col-span-4 flex flex-wrap items-center justify-end gap-2">
+        <!-- Nút Kết nối nhanh lại Folder đã nhớ (Khi mở trên GitHub Pages) -->
+        <button
+          v-if="!store.isLocalViteServer && store.savedBrowserDirHandle"
+          type="button"
+          @click="store.reconnectSavedBrowserFolder"
+          class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow cursor-pointer flex items-center gap-1"
+          title="Cấp quyền hiển thị lại ảnh từ thư mục Windows đã chọn trước đó"
+        >
+          <span>🔄</span>
+          <span>Mở lại "{{ store.savedBrowserDirHandle.name }}"</span>
+        </button>
+
         <button
           type="button"
           :disabled="store.isScanning"
@@ -101,6 +118,7 @@
         </button>
 
         <button
+          v-if="store.isLocalViteServer"
           type="button"
           :disabled="!store.folderPathInput.trim() || store.isScanning"
           @click="store.handleScanTypedFolderPath"

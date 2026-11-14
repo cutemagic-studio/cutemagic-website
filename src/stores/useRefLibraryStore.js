@@ -1,21 +1,83 @@
-// src/stores/useRefLibraryStore.js
+// src/stores/useRefLibraryStore.js 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { ref as dbRef, onValue, set, get } from 'firebase/database'
+// Hãy đảm bảo đường dẫn import `db` khớp với file cấu hình Firebase trong dự án của bạn:
+import { db } from '../firebase'
 import bundledRefLibraryJson from '../data/ref_library.json'
 import { useNotificationStore } from './useNotificationStore'
 
 const API_BASE = `${(import.meta.env.BASE_URL || '/').replace(/\/$/, '')}/__ref_library`
-const LS_MAIN_KEY = 'cmg_ref_library_static_main_v2'
-const LS_BACKUP_KEY = 'cmg_ref_library_static_backup_v2'
+const FB_MAIN_PATH = 'cmg_ref_library'
+const FB_BACKUP_PATH = 'cmg_ref_library_backup'
 const IMAGE_EXT_REGEX = /\.(png|jpe?g|webp|gif|bmp|svg|avif)$/i
+
+// Mã hóa & Giải mã Key cho Firebase RTDB (Vì Firebase cấm '.', '#', '$', '/', '[', ']' trong Key)
+const encodeFbKey = (rawKey) =>
+  String(rawKey)
+    .replace(/%/g, '%25')
+    .replace(/\./g, '%2E')
+    .replace(/#/g, '%23')
+    .replace(/\$/g, '%24')
+    .replace(/\//g, '%2F')
+    .replace(/\\/g, '%5C')
+    .replace(/\[/g, '%5B')
+    .replace(/\]/g, '%5D')
+
+const decodeFbKey = (encodedKey) => {
+  try {
+    return decodeURIComponent(String(encodedKey))
+  } catch {
+    return String(encodedKey)
+  }
+}
+
+// Lưu nhớ Folder Handle vào IndexedDB của trình duyệt (Phục vụ khi mở trên GitHub Pages)
+const IDB_NAME = 'cmg_local_ref_db_v2'
+const IDB_STORE = 'handles'
+
+const openIdb = () =>
+  new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1)
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE)
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+
+const saveHandleToIdb = async (handle) => {
+  try {
+    const idb = await openIdb()
+    const tx = idb.transaction(IDB_STORE, 'readwrite')
+    tx.objectStore(IDB_STORE).put(handle, 'root_dir')
+  } catch (e) {
+    console.warn('Could not cache folder handle:', e)
+  }
+}
+
+const loadHandleFromIdb = async () => {
+  try {
+    const idb = await openIdb()
+    return await new Promise((resolve) => {
+      const tx = idb.transaction(IDB_STORE, 'readonly')
+      const req = tx.objectStore(IDB_STORE).get('root_dir')
+      req.onsuccess = () => resolve(req.result || null)
+      req.onerror = () => resolve(null)
+    })
+  } catch {
+    return null
+  }
+}
 
 export const useRefLibraryStore = defineStore('refLibrary', () => {
   const notify = useNotificationStore()
 
-  // Kiểm tra đang chạy Local Vite Server hay trên GitHub Pages
+  // Trạng thái kết nối
+  const isFirebaseSynced = ref(false)
+  const isSavingFirebase = ref(false)
   const isLocalViteServer = ref(Boolean(import.meta.env.DEV))
+  let isRealtimeListening = false
 
-  // State chính
+  // State chính đồng bộ với nhánh `cmg_ref_library` trên Firebase
   const libraryData = ref({
     version: 2,
     lastFolderPath: '',
@@ -25,8 +87,9 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   })
   const backupMeta = ref(null)
 
-  // Map lưu Blob URL và FileHandle khi chạy ở chế độ tĩnh trên GitHub Pages
-  const browserRuntimeMap = ref({}) // { [fileNameOrKey]: { previewUrl, fileHandle, parentDirHandle } }
+  // Lưu trữ kết nối thư mục trình duyệt (Khi mở trên GitHub Pages hoặc không chạy qua Vite)
+  const savedBrowserDirHandle = ref(null)
+  const browserRuntimeMap = ref({}) // { [keyOrFileName]: { previewUrl, fileHandle, parentDirHandle } }
 
   // State Thanh công cụ & Bộ lọc
   const folderPathInput = ref('')
@@ -65,9 +128,35 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
   }
 
-  // Chuẩn hóa cấu trúc dữ liệu
-  const normalizeLibraryPayload = (rawInput) => {
-    const raw = JSON.parse(JSON.stringify(rawInput || { categories: [], items: {} }))
+  // ==========================================================================
+  // CHUẨN HÓA DỮ LIỆU ĐỌC / GHI GIỮA STORE VÀ FIREBASE RTDB
+  // ==========================================================================
+  const serializeForFirebase = (dataObj) => {
+    const cloned = JSON.parse(JSON.stringify(dataObj || { categories: [], items: {} }))
+    const encodedItems = {}
+
+    Object.entries(cloned.items || {}).forEach(([rawKey, val]) => {
+      const safeKey = encodeFbKey(rawKey)
+      encodedItems[safeKey] = {
+        ...val,
+        key: rawKey,
+        deleted_at: val.deleted_at || null
+      }
+    })
+
+    cloned.items = encodedItems
+    cloned.categories = (cloned.categories || []).map((cat, idx) => ({
+      ...cat,
+      parentId: cat.parentId || null,
+      sortOrder: Number(cat.sortOrder ?? (idx + 1)),
+      deleted_at: cat.deleted_at || null
+    }))
+
+    return cloned
+  }
+
+  const deserializeFromFirebase = (fbRaw) => {
+    const raw = JSON.parse(JSON.stringify(fbRaw || { categories: [], items: {} }))
     const now = getNowStr()
 
     raw.categories = (raw.categories || []).map((cat, idx) => ({
@@ -81,14 +170,16 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
       deleted_at: cat.deleted_at || null
     }))
 
-    const normalizedItems = {}
-    Object.entries(raw.items || {}).forEach(([key, val]) => {
-      const isWinPath = /^[a-zA-Z]:\\/.test(key) || /^[a-zA-Z]:\//.test(key)
-      const fileName = val.fileName || (isWinPath ? key.split(/[\\/]/).pop() : key)
-      normalizedItems[key] = {
-        key,
+    const decodedItems = {}
+    Object.entries(raw.items || {}).forEach(([encodedKey, val]) => {
+      const originalKey = val.key || decodeFbKey(encodedKey)
+      const isWinPath = /^[a-zA-Z]:\\/.test(originalKey) || /^[a-zA-Z]:\//.test(originalKey)
+      const fileName = val.fileName || (isWinPath ? originalKey.split(/[\\/]/).pop() : originalKey)
+
+      decodedItems[originalKey] = {
+        key: originalKey,
         fileName,
-        windowsPath: val.windowsPath || (isWinPath ? key : ''),
+        windowsPath: val.windowsPath || (isWinPath ? originalKey : ''),
         folderPath: val.folderPath || '',
         categoryId: val.categoryId || '',
         isFavorite: Boolean(val.isFavorite),
@@ -97,16 +188,17 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
         deleted_at: val.deleted_at || null
       }
     })
-    raw.items = normalizedItems
+
+    raw.items = decodedItems
     return raw
   }
 
-  // Lấy URL hiển thị ảnh (Hỗ trợ cả Local Vite Stream & Blob URL trên GitHub Pages)
+  // Hiển thị ảnh từ ổ cứng Windows (Hỗ trợ cả Local Vite Stream & Browser Blob URL)
   const getImageStreamUrl = (img) => {
     if (!img) return ''
-    const runtimeByKey = browserRuntimeMap.value[img.key] || browserRuntimeMap.value[img.fileName]
-    if (runtimeByKey?.previewUrl) {
-      return runtimeByKey.previewUrl
+    const runtime = browserRuntimeMap.value[img.key] || browserRuntimeMap.value[img.fileName]
+    if (runtime?.previewUrl) {
+      return runtime.previewUrl
     }
     if (isLocalViteServer.value && img.windowsPath) {
       return `${API_BASE}/image?path=${encodeURIComponent(img.windowsPath)}&v=${encodeURIComponent(img.updated_at || '')}`
@@ -115,100 +207,102 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   }
 
   // ==========================================================================
-  // 1. NẠP & LƯU DỮ LIỆU (TỰ ĐỘNG CHUYỂN ĐỔI LOCAL VITE <-> GITHUB PAGES)
+  // 1. ĐỒNG BỘ REAL-TIME VỚI FIREBASE (`cmg_ref_library` & `cmg_ref_library_backup`)
   // ==========================================================================
   const loadLibraryFromDisk = async () => {
-    // Nếu đang chạy Local Dev Server -> Thử kết nối Vite Middleware trước
+    savedBrowserDirHandle.value = await loadHandleFromIdb()
+
+    // Kiểm tra xem có đang chạy cùng Vite Local Middleware hay không
     if (import.meta.env.DEV) {
       try {
         const res = await fetch(`${API_BASE}/load`)
-        const contentType = res.headers.get('content-type') || ''
-        if (res.ok && contentType.includes('application/json')) {
-          const json = await res.json()
-          if (json.ok && json.data) {
-            isLocalViteServer.value = true
-            libraryData.value = normalizeLibraryPayload(json.data)
-            backupMeta.value = json.backupMeta || null
-            if (libraryData.value.lastFolderPath && !folderPathInput.value) {
-              folderPathInput.value = libraryData.value.lastFolderPath
-            }
-            return
-          }
-        }
+        const ct = res.headers.get('content-type') || ''
+        isLocalViteServer.value = res.ok && ct.includes('application/json')
       } catch {
-        // Tự động chuyển sang chế độ tĩnh nếu không có middleware
+        isLocalViteServer.value = false
       }
+    } else {
+      isLocalViteServer.value = false
     }
 
-    // Chế độ GitHub Pages (Static Fallback): Không bao giờ báo lỗi Unexpected token '<'
-    isLocalViteServer.value = false
-    const cachedMain = localStorage.getItem(LS_MAIN_KEY)
-    const cachedBackup = localStorage.getItem(LS_BACKUP_KEY)
+    if (isRealtimeListening) return
+    isRealtimeListening = true
 
-    const sourceData = cachedMain ? JSON.parse(cachedMain) : bundledRefLibraryJson
-    libraryData.value = normalizeLibraryPayload(sourceData)
+    const mainNodeRef = dbRef(db, FB_MAIN_PATH)
+    const backupNodeRef = dbRef(db, FB_BACKUP_PATH)
 
-    if (cachedBackup) {
-      const parsedBk = JSON.parse(cachedBackup)
-      backupMeta.value = {
-        updatedAt: parsedBk.backupSavedAt || parsedBk.updatedAt,
-        backupReason: parsedBk.backupReason || 'Browser Backup'
-      }
-    }
-    if (libraryData.value.lastFolderPath && !folderPathInput.value) {
-      folderPathInput.value = libraryData.value.lastFolderPath
-    }
-  }
-
-  const saveLibraryToDisk = async (reason = 'Cập nhật thư viện ảnh tham khảo') => {
-    const now = getNowStr()
-
-    if (isLocalViteServer.value) {
-      try {
-        const res = await fetch(`${API_BASE}/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            reason,
-            data: libraryData.value
-          })
-        })
-        const json = await res.json()
-        if (json.ok) {
-          libraryData.value.updatedAt = json.data.updatedAt
-          backupMeta.value = json.backupMeta
-          return true
+    // Lắng nghe nhánh chính `cmg_ref_library`
+    onValue(mainNodeRef, async (snapshot) => {
+      if (snapshot.exists()) {
+        const parsed = deserializeFromFirebase(snapshot.val())
+        libraryData.value = parsed
+        if (parsed.lastFolderPath && !folderPathInput.value) {
+          folderPathInput.value = parsed.lastFolderPath
         }
-      } catch (err) {
-        notify.error('Lỗi lưu JSON trên Local', err.message)
-        return false
+        isFirebaseSynced.value = true
+      } else {
+        // Nếu trên Firebase chưa có nhánh `cmg_ref_library`, tự động khởi tạo từ file ref_library.json
+        const initialSeed = deserializeFromFirebase(bundledRefLibraryJson)
+        initialSeed.updatedAt = getNowStr()
+        libraryData.value = initialSeed
+        await set(mainNodeRef, serializeForFirebase(initialSeed))
+        isFirebaseSynced.value = true
       }
-    }
+    })
 
-    // Nếu đang ở trên GitHub Pages -> Lưu vào LocalStorage + Backup
-    const prevSaved = localStorage.getItem(LS_MAIN_KEY) || JSON.stringify(bundledRefLibraryJson)
-    const prevObj = JSON.parse(prevSaved)
-    prevObj.backupReason = reason
-    prevObj.backupSavedAt = now
-    localStorage.setItem(LS_BACKUP_KEY, JSON.stringify(prevObj))
-
-    libraryData.value.updatedAt = now
-    localStorage.setItem(LS_MAIN_KEY, JSON.stringify(libraryData.value))
-
-    backupMeta.value = {
-      updatedAt: now,
-      backupReason: reason
-    }
-    return true
+    // Lắng nghe nhánh dự phòng `cmg_ref_library_backup`
+    onValue(backupNodeRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const bk = snapshot.val()
+        backupMeta.value = {
+          updatedAt: bk.backupSavedAt || bk.updatedAt || 'Mới',
+          backupReason: bk.backupReason || 'Auto Backup trên Firebase',
+          itemCount: Object.keys(bk.items || {}).length,
+          categoryCount: (bk.categories || []).length
+        }
+      } else {
+        backupMeta.value = null
+      }
+    })
   }
 
-  // Xuất file ref_library.json về máy tính (Hữu ích khi thao tác trên GitHub Pages)
+  // Lưu lên Firebase (Tự động đẩy bản hiện tại sang `cmg_ref_library_backup` trước khi ghi đè)
+  const saveLibraryToDisk = async (reason = 'Cập nhật thư viện ảnh tham khảo') => {
+    isSavingFirebase.value = true
+    const now = getNowStr()
+    const mainNodeRef = dbRef(db, FB_MAIN_PATH)
+    const backupNodeRef = dbRef(db, FB_BACKUP_PATH)
+
+    try {
+      // 1. Đọc trạng thái hiện tại trên Firebase để cất vào `cmg_ref_library_backup`
+      const currentSnap = await get(mainNodeRef)
+      if (currentSnap.exists()) {
+        const currentVal = currentSnap.val()
+        currentVal.backupReason = reason
+        currentVal.backupSavedAt = now
+        await set(backupNodeRef, currentVal)
+      }
+
+      // 2. Ghi dữ liệu mới lên `cmg_ref_library`
+      libraryData.value.updatedAt = now
+      const serialized = serializeForFirebase(libraryData.value)
+      await set(mainNodeRef, serialized)
+      return true
+    } catch (err) {
+      notify.error('Lỗi đồng bộ Firebase', err.message)
+      return false
+    } finally {
+      isSavingFirebase.value = false
+    }
+  }
+
+  // Xuất file JSON dự phòng về máy tính bất cứ lúc nào
   const exportJsonFile = () => {
     const blob = new Blob([JSON.stringify(libraryData.value, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'ref_library.json'
+    a.download = `ref_library_firebase_${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -332,17 +426,17 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   })
 
   // ==========================================================================
-  // 4. QUÉT FOLDER WINDOWS (HỖ TRỢ CẢ LOCAL VITE & GITHUB PAGES BROWSER PICKER)
+  // 4. QUÉT FOLDER WINDOWS & ĐỒNG BỘ LÊN FIREBASE (CÓ CONFIRM DIALOG)
   // ==========================================================================
-  const integrateScannedFilesIntoJson = async (folderPath, folderName, files) => {
+  const integrateScannedFilesIntoFirebase = async (folderPath, folderName, files) => {
     const confirmed = await notify.confirm({
-      title: 'Xác nhận nạp danh sách ảnh từ Windows?',
-      message: `Hệ thống tìm thấy ${files.length} file hình ảnh trong thư mục "${folderName}". Bạn có muốn đồng bộ chúng vào thư viện không?`,
+      title: 'Xác nhận đồng bộ đường dẫn Windows lên Firebase?',
+      message: `Hệ thống tìm thấy ${files.length} file hình ảnh trong thư mục "${folderName}". Bạn có muốn lưu thông tin đường dẫn vật lý của chúng lên Firebase không?`,
       highlightText: `${folderPath} (${files.length} ảnh)`,
-      confirmText: 'Đồng ý Nạp & Lưu',
+      confirmText: 'Đồng ý Lưu lên Firebase',
       cancelText: 'Hủy bỏ',
       variant: 'info',
-      icon: '📂'
+      icon: '☁️'
     })
     if (!confirmed) return
 
@@ -398,16 +492,11 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     if (targetCatId) selectedFilter.value = targetCatId
 
     await saveLibraryToDisk(`Quét thư mục Windows: ${folderName} (${files.length} ảnh)`)
-    notify.success('Đã nạp thành công!', `Đã đồng bộ ${files.length} ảnh từ thư mục "${folderName}".`)
+    notify.success('Đã đồng bộ Firebase!', `Đã lưu đường dẫn của ${files.length} ảnh lên Firebase.`)
   }
 
-  // Quét bằng File System Access API khi mở trên GitHub Pages
-  const pickFolderViaBrowserApi = async () => {
-    if (!('showDirectoryPicker' in window)) {
-      notify.error('Trình duyệt không hỗ trợ', 'Vui lòng dùng Opera, Chrome hoặc Edge trên Windows!')
-      return
-    }
-    const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' })
+  // Nạp ảnh từ DirectoryHandle trình duyệt (Dùng khi mở trên GitHub Pages)
+  const populateBrowserRuntimeFromHandle = async (dirHandle) => {
     const files = []
     const basePrefix = folderPathInput.value.trim() || dirHandle.name
 
@@ -432,7 +521,32 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     }
 
     await scanHandle(dirHandle)
-    await integrateScannedFilesIntoJson(basePrefix, dirHandle.name, files)
+    return { basePrefix, folderName: dirHandle.name, files }
+  }
+
+  const reconnectSavedBrowserFolder = async () => {
+    if (!savedBrowserDirHandle.value) return
+    try {
+      const perm = await savedBrowserDirHandle.value.requestPermission({ mode: 'readwrite' })
+      if (perm === 'granted') {
+        await populateBrowserRuntimeFromHandle(savedBrowserDirHandle.value)
+        notify.success('Đã kết nối ổ đĩa!', `Đã nạp hiển thị ảnh từ thư mục "${savedBrowserDirHandle.value.name}".`)
+      }
+    } catch (err) {
+      notify.error('Không thể kết nối lại folder', err.message)
+    }
+  }
+
+  const pickFolderViaBrowserApi = async () => {
+    if (!('showDirectoryPicker' in window)) {
+      notify.error('Trình duyệt không hỗ trợ', 'Vui lòng dùng Opera, Chrome hoặc Edge trên Windows!')
+      return
+    }
+    const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' })
+    savedBrowserDirHandle.value = dirHandle
+    await saveHandleToIdb(dirHandle)
+    const { basePrefix, folderName, files } = await populateBrowserRuntimeFromHandle(dirHandle)
+    await integrateScannedFilesIntoFirebase(basePrefix, folderName, files)
   }
 
   const handlePickWindowsFolderDialog = async () => {
@@ -442,7 +556,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
         const res = await fetch(`${API_BASE}/pick_windows_folder`)
         const json = await res.json()
         if (json.ok && json.files) {
-          await integrateScannedFilesIntoJson(json.folderPath, json.folderName, json.files)
+          await integrateScannedFilesIntoFirebase(json.folderPath, json.folderName, json.files)
         }
       } else {
         await pickFolderViaBrowserApi()
@@ -473,7 +587,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
         notify.error('Đường dẫn không tồn tại', json.error)
         return
       }
-      await integrateScannedFilesIntoJson(json.folderPath, json.folderName, json.files)
+      await integrateScannedFilesIntoFirebase(json.folderPath, json.folderName, json.files)
     } catch (err) {
       notify.error('Lỗi quét thư mục', err.message)
     } finally {
@@ -482,7 +596,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   }
 
   // ==========================================================================
-  // 5. CRUD CÂY CATEGORY CHA - CON (CÓ CONFIRM DIALOG)
+  // 5. CRUD CÂY CATEGORY CHA - CON (LƯU LÊN FIREBASE KÈM CONFIRM DIALOG)
   // ==========================================================================
   const openCreateCategoryModal = (defaultParentId = null) => {
     const maxOrder = activeCategoriesList.value.reduce((m, c) => Math.max(m, Number(c.sortOrder || 0)), 0)
@@ -527,10 +641,10 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     }
 
     const confirmed = await notify.confirm({
-      title: categoryModal.value.isEdit ? 'Xác nhận cập nhật Category?' : 'Xác nhận tạo Category mới?',
+      title: categoryModal.value.isEdit ? 'Xác nhận cập nhật Category lên Firebase?' : 'Xác nhận tạo Category mới trên Firebase?',
       message: categoryModal.value.isEdit
-        ? 'Thông tin tên, biểu tượng, thứ tự ưu tiên và mối quan hệ Cha - Con của Category này sẽ được lưu lại.'
-        : 'Category mới sẽ được thêm vào cây thư mục.',
+        ? 'Thông tin tên, biểu tượng, thứ tự ưu tiên và mối quan hệ Cha - Con của Category này sẽ được đồng bộ lên Firebase.'
+        : 'Category mới sẽ được thêm vào cây thư mục trên Firebase.',
       highlightText: `${f.icon} ${f.name.trim()} (Ưu tiên: #${f.sortOrder})`,
       confirmText: categoryModal.value.isEdit ? 'Đồng ý Cập nhật' : 'Đồng ý Tạo mới',
       cancelText: 'Quay lại',
@@ -568,7 +682,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
 
     categoryModal.value.show = false
     await saveLibraryToDisk(categoryModal.value.isEdit ? `Cập nhật Category: ${f.name}` : `Tạo Category: ${f.name}`)
-    notify.success('Hoàn tất!', 'Đã cập nhật cấu trúc Cây Category.')
+    notify.success('Đã đồng bộ Firebase!', 'Cấu trúc Cây Category đã được lưu lên Firebase.')
   }
 
   const handleMoveCategoryOrder = async (node, direction) => {
@@ -608,7 +722,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   const handleSoftDeleteCategory = async (node) => {
     const confirmed = await notify.confirm({
       title: 'Xác nhận xóa mềm (Soft Delete) Category?',
-      message: 'Category này sẽ được đánh dấu deleted_at. Các Category con (nếu có) sẽ được nâng lên cấp cha. File ảnh trên ổ đĩa Windows không bị ảnh hưởng.',
+      message: 'Category này sẽ được đánh dấu deleted_at trên Firebase. Các Category con (nếu có) sẽ được nâng lên cấp cha. File ảnh trên ổ đĩa Windows không bị ảnh hưởng.',
       highlightText: `${node.icon} ${node.name}`,
       confirmText: 'Xóa mềm Category',
       cancelText: 'Hủy bỏ',
@@ -654,8 +768,8 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
 
   const handlePermanentDeleteCategory = async (tCat) => {
     const confirmed = await notify.confirm({
-      title: 'Xóa vĩnh viễn Category khỏi JSON?',
-      message: 'Category này sẽ bị xóa hẳn khỏi dữ liệu JSON và các ảnh thuộc về nó sẽ chuyển sang Chưa phân loại.',
+      title: 'Xóa vĩnh viễn Category khỏi Firebase?',
+      message: 'Category này sẽ bị xóa hẳn khỏi nhánh cmg_ref_library trên Firebase và các ảnh thuộc về nó sẽ chuyển sang Chưa phân loại.',
       highlightText: `${tCat.icon} ${tCat.name}`,
       confirmText: 'Xóa Vĩnh Viễn',
       cancelText: 'Hủy',
@@ -678,7 +792,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     const nextState = !img.isFavorite
     const confirmed = await notify.confirm({
       title: nextState ? 'Đánh dấu ảnh quan trọng (Favorite)?' : 'Bỏ đánh dấu sao cho ảnh này?',
-      message: 'Trạng thái đánh dấu sao và thời gian updated_at sẽ được lưu lại.',
+      message: 'Trạng thái đánh dấu sao và thời gian updated_at sẽ được đồng bộ lên Firebase.',
       highlightText: img.fileName,
       confirmText: 'Đồng ý',
       cancelText: 'Hủy',
@@ -700,7 +814,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     const targetLabel = getCategoryLabel(newCatId)
     const confirmed = await notify.confirm({
       title: 'Xác nhận chuyển Category cho ảnh?',
-      message: `Bạn có muốn chuyển ảnh này sang mục "${targetLabel}" không?`,
+      message: `Bạn có muốn chuyển ảnh này sang mục "${targetLabel}" và lưu lên Firebase không?`,
       highlightText: `${img.fileName} → ${targetLabel}`,
       confirmText: 'Đồng ý Chuyển',
       cancelText: 'Giữ nguyên',
@@ -717,7 +831,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
       record.categoryId = newCatId
       record.updated_at = getNowStr()
       await saveLibraryToDisk(`Chuyển Category ảnh: ${img.fileName}`)
-      notify.success('Đã cập nhật!', `Đã chuyển "${img.fileName}" sang ${targetLabel}.`)
+      notify.success('Đã cập nhật Firebase!', `Đã chuyển "${img.fileName}" sang ${targetLabel}.`)
     }
   }
 
@@ -735,7 +849,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     const targetLabel = getCategoryLabel(finalCatId)
 
     const confirmed = await notify.confirm({
-      title: 'Xác nhận gán Category hàng loạt?',
+      title: 'Xác nhận gán Category hàng loạt trên Firebase?',
       message: `Toàn bộ ${selectedKeys.value.length} ảnh đang chọn sẽ được cập nhật sang "${targetLabel}".`,
       highlightText: `${selectedKeys.value.length} ảnh → ${targetLabel}`,
       confirmText: 'Áp dụng ngay',
@@ -755,13 +869,13 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     selectedKeys.value = []
     batchTargetCatId.value = ''
     await saveLibraryToDisk(`Gán Category hàng loạt sang ${targetLabel}`)
-    notify.success('Hoàn tất!', 'Đã phân loại hàng loạt.')
+    notify.success('Hoàn tất!', 'Đã phân loại hàng loạt và đồng bộ lên Firebase.')
   }
 
   const handleSoftDeleteSingleItem = async (img) => {
     const confirmed = await notify.confirm({
       title: 'Xóa mềm (Soft Delete) bản ghi ảnh này?',
-      message: 'Ảnh sẽ được gắn mốc thời gian deleted_at và chuyển vào Thùng rác. File gốc trên ổ đĩa Windows được giữ nguyên 100%.',
+      message: 'Ảnh sẽ được gắn mốc thời gian deleted_at và chuyển vào Thùng rác trên Firebase. File gốc trên ổ đĩa Windows được giữ nguyên 100%.',
       highlightText: img.windowsPath || img.fileName,
       confirmText: 'Đưa vào Thùng rác',
       cancelText: 'Hủy',
@@ -783,7 +897,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     if (!selectedKeys.value.length) return
     const confirmed = await notify.confirm({
       title: 'Xóa mềm hàng loạt ảnh đã chọn?',
-      message: `Đánh dấu deleted_at cho ${selectedKeys.value.length} ảnh và chuyển vào Thùng rác.`,
+      message: `Đánh dấu deleted_at cho ${selectedKeys.value.length} ảnh và chuyển vào Thùng rác trên Firebase.`,
       highlightText: `${selectedKeys.value.length} ảnh được chọn`,
       confirmText: 'Xóa mềm tất cả',
       cancelText: 'Hủy',
@@ -825,10 +939,10 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
 
   const handlePermanentDeleteSingleItem = async (img) => {
     const confirmed = await notify.confirm({
-      title: 'Xóa vĩnh viễn bản ghi này khỏi JSON?',
-      message: 'Bản ghi sẽ bị xóa khỏi JSON (File ảnh thật trên ổ đĩa Windows vẫn giữ nguyên).',
+      title: 'Xóa vĩnh viễn bản ghi này khỏi Firebase?',
+      message: 'Bản ghi sẽ bị xóa khỏi nhánh cmg_ref_library trên Firebase (File ảnh thật trên ổ đĩa Windows vẫn giữ nguyên).',
       highlightText: img.windowsPath || img.fileName,
-      confirmText: 'Xóa khỏi JSON',
+      confirmText: 'Xóa khỏi Firebase',
       cancelText: 'Hủy',
       variant: 'danger',
       icon: '⚠️'
@@ -842,9 +956,9 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   const confirmRenameFileOnWindows = async (item, finalNewName) => {
     const confirmed = await notify.confirm({
       title: 'Xác nhận đổi tên file thật trên ổ đĩa Windows?',
-      message: 'File trên ổ cứng Windows sẽ được đổi tên trực tiếp, đồng thời đường dẫn vật lý trong JSON sẽ được cập nhật đồng bộ.',
+      message: 'File trên ổ cứng Windows sẽ được đổi tên trực tiếp, đồng thời đường dẫn vật lý trên Firebase sẽ được cập nhật đồng bộ.',
       highlightText: `${item.fileName}  ➔  ${finalNewName}`,
-      confirmText: 'Đồng ý Đổi tên trên Windows',
+      confirmText: 'Đồng ý Đổi tên & Lưu Firebase',
       cancelText: 'Hủy bỏ',
       variant: 'warning',
       icon: '✏️'
@@ -872,10 +986,9 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
         newWindowsPath = json.newWindowsPath
         folderPath = json.folderPath
       } else {
-        // Trên GitHub Pages: Đổi tên qua FileHandle của trình duyệt
         const runtime = browserRuntimeMap.value[item.key] || browserRuntimeMap.value[item.fileName]
         if (!runtime?.fileHandle) {
-          notify.warning('Chưa cấp quyền thư mục', 'Hãy bấm "Chọn Folder trên Windows" để cấp quyền đọc/ghi cho trình duyệt trước khi đổi tên!')
+          notify.warning('Chưa cấp quyền thư mục', 'Hãy bấm "Mở lại Folder" hoặc "Chọn Folder trên Windows" để cấp quyền đọc/ghi cho trình duyệt trước khi đổi tên!')
           return false
         }
         if (typeof runtime.fileHandle.move === 'function') {
@@ -901,7 +1014,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
 
       renamingItem.value = null
       await saveLibraryToDisk(`Đổi tên file Windows: ${item.fileName} -> ${finalNewName}`)
-      notify.success('Đổi tên thành công!', `Đã đổi thành "${finalNewName}" trên ổ đĩa Windows.`)
+      notify.success('Đổi tên thành công!', `Đã đổi thành "${finalNewName}" và đồng bộ lên Firebase.`)
       return true
     } catch (err) {
       notify.error('Lỗi đổi tên file', err.message)
@@ -910,43 +1023,37 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
   }
 
   // ==========================================================================
-  // 7. BACKUP & ROLLBACK (HOÀN TÁC)
+  // 7. BACKUP & ROLLBACK TRỰC TIẾP TRÊN FIREBASE (`cmg_ref_library_backup`)
   // ==========================================================================
   const handleManualBackup = async () => {
     const confirmed = await notify.confirm({
-      title: 'Tạo bản sao lưu sang ref_library_backup.json?',
-      message: 'Toàn bộ trạng thái hiện tại sẽ được sao chép sang bản dự phòng Backup.',
+      title: 'Tạo bản sao lưu lên nhánh Firebase Backup?',
+      message: 'Toàn bộ trạng thái hiện tại sẽ được sao chép sang nhánh dự phòng cmg_ref_library_backup trên Firebase.',
       highlightText: `${activeItemsList.value.length} ảnh & ${activeCategoriesList.value.length} Category`,
-      confirmText: 'Sao lưu ngay',
+      confirmText: 'Sao lưu lên Firebase',
       cancelText: 'Hủy',
       variant: 'info',
       icon: '🛡️'
     })
     if (!confirmed) return
 
-    if (isLocalViteServer.value) {
-      const res = await fetch(`${API_BASE}/backup_now`, { method: 'POST' })
-      const json = await res.json()
-      if (json.ok) {
-        backupMeta.value = json.backupMeta
-        notify.success('Đã tạo bản Backup!', 'File ref_library_backup.json đã được cập nhật mới nhất.')
-      }
-    } else {
+    try {
       const now = getNowStr()
-      const snapshot = JSON.parse(JSON.stringify(libraryData.value))
-      snapshot.backupSavedAt = now
-      snapshot.backupReason = 'Sao lưu thủ công bởi Admin'
-      localStorage.setItem(LS_BACKUP_KEY, JSON.stringify(snapshot))
-      backupMeta.value = { updatedAt: now, backupReason: snapshot.backupReason }
-      notify.success('Đã tạo bản Backup!', 'Đã lưu bản dự phòng trên trình duyệt.')
+      const serialized = serializeForFirebase(libraryData.value)
+      serialized.backupSavedAt = now
+      serialized.backupReason = 'Sao lưu thủ công bởi Admin'
+      await set(dbRef(db, FB_BACKUP_PATH), serialized)
+      notify.success('Đã tạo bản Backup!', 'Nhánh cmg_ref_library_backup trên Firebase đã được cập nhật.')
+    } catch (err) {
+      notify.error('Lỗi tạo Backup trên Firebase', err.message)
     }
   }
 
   const handleRollbackBackup = async () => {
     if (!backupMeta.value) return
     const confirmed = await notify.confirm({
-      title: 'Khôi phục (Rollback) về phiên bản trước đó?',
-      message: 'Dữ liệu từ bản Backup sẽ được khôi phục đè lên phiên bản hiện tại.',
+      title: 'Khôi phục (Rollback) từ nhánh Firebase Backup?',
+      message: 'Dữ liệu từ nhánh cmg_ref_library_backup sẽ được khôi phục đè lên nhánh chính cmg_ref_library (Trạng thái hiện tại cũng sẽ được hoán đổi sang Backup để bạn có thể quay lại nếu cần).',
       highlightText: `Bản lưu lúc: ${backupMeta.value.updatedAt} (${backupMeta.value.backupReason})`,
       confirmText: '⏪ Đồng ý Khôi phục Version trước',
       cancelText: 'Hủy bỏ',
@@ -955,27 +1062,44 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     })
     if (!confirmed) return
 
-    if (isLocalViteServer.value) {
-      const res = await fetch(`${API_BASE}/restore_backup`, { method: 'POST' })
-      const json = await res.json()
-      if (json.ok) {
-        await loadLibraryFromDisk()
-        notify.success('Đã khôi phục thành công!', 'Thư viện đã quay về phiên bản Backup trước đó.')
-      } else {
-        notify.error('Lỗi khôi phục Backup', json.error)
+    try {
+      const mainNodeRef = dbRef(db, FB_MAIN_PATH)
+      const backupNodeRef = dbRef(db, FB_BACKUP_PATH)
+
+      const [backupSnap, mainSnap] = await Promise.all([
+        get(backupNodeRef),
+        get(mainNodeRef)
+      ])
+
+      if (!backupSnap.exists()) {
+        notify.error('Không tìm thấy bản Backup', 'Nhánh cmg_ref_library_backup trên Firebase đang trống!')
+        return
       }
-    } else {
-      const cachedBackup = localStorage.getItem(LS_BACKUP_KEY)
-      if (cachedBackup) {
-        localStorage.setItem(LS_MAIN_KEY, cachedBackup)
-        await loadLibraryFromDisk()
-        notify.success('Đã khôi phục thành công!', 'Đã quay về phiên bản Backup trước đó.')
+
+      const now = getNowStr()
+      const backupVal = backupSnap.val()
+      const currentVal = mainSnap.exists() ? mainSnap.val() : null
+
+      // Hoán đổi bản hiện tại vào nhánh Backup trước khi ghi đè
+      if (currentVal) {
+        currentVal.backupReason = 'Bản lưu tự động trước khi Rollback'
+        currentVal.backupSavedAt = now
+        await set(backupNodeRef, currentVal)
       }
+
+      backupVal.updatedAt = now
+      await set(mainNodeRef, backupVal)
+      notify.success('Đã khôi phục thành công!', 'Dữ liệu trên Firebase đã quay về phiên bản Backup trước đó.')
+    } catch (err) {
+      notify.error('Lỗi khôi phục Backup', err.message)
     }
   }
 
   return {
+    isFirebaseSynced,
+    isSavingFirebase,
     isLocalViteServer,
+    savedBrowserDirHandle,
     libraryData,
     backupMeta,
     folderPathInput,
@@ -1004,6 +1128,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     countImagesForCategoryNode,
     loadLibraryFromDisk,
     exportJsonFile,
+    reconnectSavedBrowserFolder,
     handlePickWindowsFolderDialog,
     handleScanTypedFolderPath,
     openCreateCategoryModal,

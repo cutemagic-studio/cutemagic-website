@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "lastFolderPath": "G:\\DanhSachDao\\c45cb17dd32f8f85",
-  "updatedAt": "2026-11-14 14:24:55",
+  "lastFolderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+  "updatedAt": "2026-11-15 00:00:07",
   "categories": [
     {
       "id": "cat_islands",
@@ -81,6 +81,16 @@
       "sortOrder": 8,
       "created_at": "2026-11-14 14:22:37",
       "updated_at": "2026-11-14 14:22:37",
+      "deleted_at": null
+    },
+    {
+      "id": "cat_f414e1e851b95a23_142",
+      "name": "f414e1e851b95a23",
+      "icon": "📌",
+      "parentId": "cat_danh_sach_dao_110",
+      "sortOrder": 9,
+      "created_at": "2026-11-14 23:59:26",
+      "updated_at": "2026-11-14 23:59:26",
       "deleted_at": null
     }
   ],
@@ -534,6 +544,226 @@
       "isFavorite": false,
       "created_at": "2026-11-14 14:24:30",
       "updated_at": "2026-11-14 14:24:55",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\1.webp": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\1.webp",
+      "fileName": "1.webp",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\1.webp",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\2.webp": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\2.webp",
+      "fileName": "2.webp",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\2.webp",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\3.webp": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\3.webp",
+      "fileName": "3.webp",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\3.webp",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\4.webp": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\4.webp",
+      "fileName": "4.webp",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\4.webp",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\5.webp": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\5.webp",
+      "fileName": "5.webp",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\5.webp",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_8bajdb8bajdb8baj.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_8bajdb8bajdb8baj.png",
+      "fileName": "Gemini_Generated_Image_8bajdb8bajdb8baj.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_8bajdb8bajdb8baj.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_9z6kd19z6kd19z6k.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_9z6kd19z6kd19z6k.png",
+      "fileName": "Gemini_Generated_Image_9z6kd19z6kd19z6k.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_9z6kd19z6kd19z6k.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_b3hchdb3hchdb3hc.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_b3hchdb3hchdb3hc.png",
+      "fileName": "Gemini_Generated_Image_b3hchdb3hchdb3hc.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_b3hchdb3hchdb3hc.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_c3ccvnc3ccvnc3cc.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_c3ccvnc3ccvnc3cc.png",
+      "fileName": "Gemini_Generated_Image_c3ccvnc3ccvnc3cc.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_c3ccvnc3ccvnc3cc.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_d9nwwkd9nwwkd9nw.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_d9nwwkd9nwwkd9nw.png",
+      "fileName": "Gemini_Generated_Image_d9nwwkd9nwwkd9nw.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_d9nwwkd9nwwkd9nw.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_e97x91e97x91e97x.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_e97x91e97x91e97x.png",
+      "fileName": "Gemini_Generated_Image_e97x91e97x91e97x.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_e97x91e97x91e97x.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_hd1f6ehd1f6ehd1f.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_hd1f6ehd1f6ehd1f.png",
+      "fileName": "Gemini_Generated_Image_hd1f6ehd1f6ehd1f.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_hd1f6ehd1f6ehd1f.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_jc8f9cjc8f9cjc8f.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_jc8f9cjc8f9cjc8f.png",
+      "fileName": "Gemini_Generated_Image_jc8f9cjc8f9cjc8f.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_jc8f9cjc8f9cjc8f.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_kfcalmkfcalmkfca.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_kfcalmkfcalmkfca.png",
+      "fileName": "Gemini_Generated_Image_kfcalmkfcalmkfca.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_kfcalmkfcalmkfca.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_oklz11oklz11oklz.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_oklz11oklz11oklz.png",
+      "fileName": "Gemini_Generated_Image_oklz11oklz11oklz.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_oklz11oklz11oklz.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_qm7kj1qm7kj1qm7k.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_qm7kj1qm7kj1qm7k.png",
+      "fileName": "Gemini_Generated_Image_qm7kj1qm7kj1qm7k.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_qm7kj1qm7kj1qm7k.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_rz5xi0rz5xi0rz5x.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_rz5xi0rz5xi0rz5x.png",
+      "fileName": "Gemini_Generated_Image_rz5xi0rz5xi0rz5x.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_rz5xi0rz5xi0rz5x.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uolzj4uolzj4uolz.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uolzj4uolzj4uolz.png",
+      "fileName": "Gemini_Generated_Image_uolzj4uolzj4uolz.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uolzj4uolzj4uolz.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uydzfruydzfruydz.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uydzfruydzfruydz.png",
+      "fileName": "Gemini_Generated_Image_uydzfruydzfruydz.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_uydzfruydzfruydz.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
+      "deleted_at": null
+    },
+    "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_wrjz1owrjz1owrjz.png": {
+      "key": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_wrjz1owrjz1owrjz.png",
+      "fileName": "Gemini_Generated_Image_wrjz1owrjz1owrjz.png",
+      "windowsPath": "G:\\DanhSachDao\\f414e1e851b95a23\\Gemini_Generated_Image_wrjz1owrjz1owrjz.png",
+      "folderPath": "G:\\DanhSachDao\\f414e1e851b95a23",
+      "categoryId": "cat_f414e1e851b95a23_142",
+      "isFavorite": false,
+      "created_at": "2026-11-14 23:59:46",
+      "updated_at": "2026-11-15 00:00:07",
       "deleted_at": null
     }
   }
