@@ -1,13 +1,13 @@
 <!-- src/components/admin/tabs/ref_library/components/RefImageGridSection.vue -->
 <template>
-  <div class="space-y-4">
-    <!-- Thanh công cụ Tìm kiếm & Thao tác hàng loạt -->
+  <div ref="gridTopRef" class="space-y-4">
+    <!-- Thanh công cụ Tìm kiếm, Chọn trang & Thao tác hàng loạt -->
     <div class="bg-white rounded-3xl border-2 border-[#8470FF] p-4 shadow-md flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2 flex-1 min-w-[220px]">
         <input
           v-model="store.searchQuery"
           type="text"
-          placeholder="🔍 Tìm theo tên file hoặc đường dẫn Windows (VD: D:\, Prop_, .webp)..."
+          placeholder="🔍 Tìm theo tên file hoặc đường dẫn Windows (VD: G:\, Prop_, .webp)..."
           class="w-full border-2 border-[#8470FF] rounded-xl px-3.5 py-2 text-xs font-bold focus:outline-none focus:border-blue-600"
         />
         <button
@@ -20,7 +20,27 @@
         </button>
       </div>
 
+      <!-- Chọn số ảnh mỗi trang & Chọn hàng loạt -->
       <div class="flex flex-wrap items-center gap-2">
+        <select
+          v-model.number="store.itemsPerPage"
+          class="border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-black text-slate-700 bg-slate-50 cursor-pointer"
+          title="Số lượng ảnh hiển thị trên mỗi trang"
+        >
+          <option :value="12">12 ảnh / trang</option>
+          <option :value="18">18 ảnh / trang</option>
+          <option :value="36">36 ảnh / trang</option>
+          <option :value="72">72 ảnh / trang</option>
+        </select>
+
+        <button
+          type="button"
+          @click="store.toggleSelectCurrentPage"
+          class="px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-black text-slate-700 cursor-pointer"
+        >
+          Chọn trang này ({{ store.paginatedImages.length }})
+        </button>
+
         <button
           type="button"
           @click="store.toggleSelectAllVisible"
@@ -34,8 +54,8 @@
             v-model="store.batchTargetCatId"
             class="border-2 border-blue-600 rounded-xl px-3 py-2 text-xs font-black text-blue-700 bg-blue-50/50"
           >
-            <option value="">-- Chuyển {{ store.selectedKeys.length }} ảnh sang Category --</option>
-            <option v-for="node in store.flattenedCategoryTree" :key="node.id" :value="node.id">
+            <option value="">-- Chuyển {{ store.selectedKeys.length }} ảnh sang Category Ảo --</option>
+            <option v-for="node in store.virtualCategoryTree" :key="node.id" :value="node.id">
               {{ '—'.repeat(node.depth) }} {{ node.icon }} {{ node.name }}
             </option>
             <option value="__CLEAR__">❓ Bỏ phân loại (Uncategorized)</option>
@@ -63,14 +83,24 @@
 
     <!-- Lưới hiển thị Ảnh -->
     <div
-      v-if="store.filteredImages.length > 0"
+      v-if="store.paginatedImages.length > 0"
       class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
     >
       <div
-        v-for="img in store.filteredImages"
+        v-for="img in store.paginatedImages"
         :key="img.key"
+        :draggable="!img.deleted_at"
+        @dragstart="store.handleDragStartImage(img, $event)"
+        @dragend="store.handleDragEndImage"
         class="group bg-white rounded-2xl border-2 transition-all overflow-hidden flex flex-col shadow-xs hover:shadow-xl"
-        :class="store.selectedKeys.includes(img.key) ? 'border-blue-600 ring-2 ring-blue-500/30' : 'border-slate-200 hover:border-[#8470FF]'"
+        :class="[
+          !img.deleted_at ? 'cursor-grab active:cursor-grabbing' : '',
+          store.draggingImageKeys?.includes(img.key)
+            ? 'opacity-45 scale-95 border-dashed border-emerald-500 ring-2 ring-emerald-400/40'
+            : (store.selectedKeys.includes(img.key)
+                ? 'border-blue-600 ring-2 ring-blue-500/30'
+                : 'border-slate-200 hover:border-[#8470FF]')
+        ]"
       >
         <div class="relative aspect-square bg-slate-100 overflow-hidden">
           <img
@@ -101,6 +131,14 @@
             />
           </label>
 
+          <!-- Chỉ dẫn Kéo Thả nhanh -->
+          <div
+            v-if="!img.deleted_at"
+            class="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2.5 left-10 px-2 py-0.5 rounded-md bg-slate-950/80 text-[#ffe600] text-[10px] font-black pointer-events-none"
+          >
+            ✋ Kéo sang Category Ảo
+          </div>
+
           <!-- Nút Đánh dấu sao -->
           <button
             type="button"
@@ -110,9 +148,9 @@
             <span>{{ img.isFavorite ? '⭐' : '☆' }}</span>
           </button>
 
-          <!-- Nhãn Category hiện tại -->
+          <!-- Nhãn Category Ảo hiện tại ở góc đáy ảnh -->
           <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
-            <span class="px-2 py-0.5 rounded bg-slate-950/80 text-white text-[10px] font-bold truncate">
+            <span class="px-2 py-0.5 rounded bg-slate-950/85 text-white text-[10px] font-bold truncate">
               {{ store.getCategoryLabel(img.categoryId) }}
             </span>
           </div>
@@ -120,7 +158,7 @@
 
         <!-- Chi tiết Đường dẫn Windows & Nút thao tác -->
         <div class="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
-          <div class="space-y-1">
+          <div class="space-y-1.5">
             <div class="flex items-start justify-between gap-1.5">
               <p class="text-xs font-mono font-black text-slate-900 break-all leading-snug" :title="img.fileName">
                 {{ img.fileName }}
@@ -135,12 +173,25 @@
               </button>
             </div>
 
-            <p
-              class="text-[10px] font-mono text-blue-700 bg-blue-50/70 px-2 py-1 rounded border border-blue-100 break-all leading-tight"
-              :title="img.windowsPath"
-            >
-              💻 {{ img.windowsPath || 'Chưa gắn đường dẫn ổ đĩa' }}
-            </p>
+            <!-- [CẬP NHẬT]: Đường dẫn vật lý + Nút nhỏ Mở trong thư mục (Đúng vị trí khoanh xanh) -->
+            <div class="flex items-stretch gap-1.5">
+              <p
+                class="flex-1 min-w-0 text-[10px] font-mono text-blue-700 bg-blue-50/70 px-2 py-1 rounded-lg border border-blue-100 break-all leading-tight flex items-center"
+                :title="img.windowsPath"
+              >
+                <span>💻 {{ img.windowsPath || 'Chưa gắn đường dẫn ổ đĩa' }}</span>
+              </p>
+
+              <button
+                v-if="img.windowsPath"
+                type="button"
+                @click.stop="store.handleOpenInFolder(img)"
+                class="shrink-0 px-2 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-blue-600 text-xs flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title="Mở vị trí file ảnh này trong Windows Explorer (Open in Folder)"
+              >
+                📂
+              </button>
+            </div>
 
             <div class="text-[9px] font-mono text-slate-400 flex flex-wrap justify-between gap-1 pt-0.5">
               <span>Tạo: {{ img.created_at || '—' }}</span>
@@ -158,8 +209,8 @@
                 @change="store.handleSingleCategoryChange(img, $event.target.value, $event)"
                 class="flex-1 border border-slate-300 rounded-lg px-2 py-1.5 text-[11px] font-bold bg-slate-50 hover:bg-white focus:outline-none focus:border-blue-600 cursor-pointer"
               >
-                <option value="">❓ Chưa phân loại</option>
-                <option v-for="node in store.flattenedCategoryTree" :key="node.id" :value="node.id">
+                <option value="">❓ Chưa gán Category Ảo</option>
+                <option v-for="node in store.virtualCategoryTree" :key="node.id" :value="node.id">
                   {{ '—'.repeat(node.depth) }} {{ node.icon }} {{ node.name }}
                 </option>
               </select>
@@ -186,7 +237,7 @@
                 @click="store.handlePermanentDeleteSingleItem(img)"
                 class="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black cursor-pointer"
               >
-                Xóa hẳn khỏi JSON
+                Xóa hẳn khỏi Firebase
               </button>
             </template>
           </div>
@@ -207,10 +258,102 @@
         Hãy bấm nút <strong>"📂 Chọn Folder trên Windows"</strong> ở thanh trên cùng hoặc chọn một Category khác ở cột bên trái.
       </p>
     </div>
+
+    <!-- THANH ĐIỀU HƯỚNG PHÂN TRANG -->
+    <div
+      v-if="store.totalPages > 1"
+      class="bg-white rounded-3xl border-2 border-[#8470FF] px-5 py-3.5 shadow-md flex flex-wrap items-center justify-between gap-4"
+    >
+      <p class="text-xs font-bold text-slate-600">
+        Hiển thị
+        <strong class="text-slate-900 font-mono">
+          {{ (store.currentPage - 1) * store.itemsPerPage + 1 }}–{{ Math.min(store.currentPage * store.itemsPerPage, store.filteredImages.length) }}
+        </strong>
+        trên tổng số
+        <strong class="text-blue-600 font-mono">{{ store.filteredImages.length }}</strong> ảnh
+        (Trang {{ store.currentPage }}/{{ store.totalPages }})
+      </p>
+
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button
+          type="button"
+          :disabled="store.currentPage === 1"
+          @click="changePage(1)"
+          class="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 text-xs font-black text-slate-700 cursor-pointer"
+        >
+          «
+        </button>
+
+        <button
+          type="button"
+          :disabled="store.currentPage === 1"
+          @click="changePage(store.currentPage - 1)"
+          class="px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 text-xs font-black text-slate-700 cursor-pointer"
+        >
+          ‹ Trước
+        </button>
+
+        <button
+          v-for="p in visiblePageNumbers"
+          :key="p"
+          type="button"
+          @click="changePage(p)"
+          class="w-8 h-8 rounded-xl text-xs font-mono font-black border transition-all cursor-pointer"
+          :class="store.currentPage === p
+            ? 'bg-blue-600 text-white border-blue-600 shadow'
+            : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'"
+        >
+          {{ p }}
+        </button>
+
+        <button
+          type="button"
+          :disabled="store.currentPage === store.totalPages"
+          @click="changePage(store.currentPage + 1)"
+          class="px-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 text-xs font-black text-slate-700 cursor-pointer"
+        >
+          Sau ›
+        </button>
+
+        <button
+          type="button"
+          :disabled="store.currentPage === store.totalPages"
+          @click="changePage(store.totalPages)"
+          class="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-40 text-xs font-black text-slate-700 cursor-pointer"
+        >
+          »
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { useRefLibraryStore } from '../../../../../stores/useRefLibraryStore'
+
 const store = useRefLibraryStore()
+const gridTopRef = ref(null)
+
+const visiblePageNumbers = computed(() => {
+  const total = store.totalPages
+  const cur = store.currentPage
+  const delta = 3
+  let start = Math.max(1, cur - delta)
+  let end = Math.min(total, cur + delta)
+
+  if (end - start < delta * 2) {
+    if (start === 1) end = Math.min(total, start + delta * 2)
+    else if (end === total) start = Math.max(1, end - delta * 2)
+  }
+
+  const pages = []
+  for (let i = start; i <= end; i++) pages.push(i)
+  return pages
+})
+
+const changePage = (page) => {
+  store.goToPage(page)
+  gridTopRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 </script>

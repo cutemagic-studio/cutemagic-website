@@ -202,8 +202,15 @@
     <!-- ======================================================= -->
     <!-- NỘI DUNG CHÍNH BÊN PHẢI (TỰ ĐỘNG MỞ RỘNG KHI THU SIDEBAR)-->
     <!-- ======================================================= -->
-    <main class="flex-1 h-full overflow-y-auto p-6 lg:p-8 relative transition-all duration-300">
+    <main 
+      :class="[
+        'flex-1 h-full relative transition-all duration-300',
+        activeTab.id === 'ref_library' ? 'overflow-hidden p-3 lg:p-4' : 'overflow-y-auto p-6 lg:p-8'
+      ]"
+    >
+      <!-- [CẬP NHẬT]: Chỉ hiển thị vùng Header này khi KHÔNG PHẢI trang Kho Ảnh Tham Khảo (ref_library) -->
       <div 
+        v-if="activeTab.id !== 'ref_library'"
         :class="[
           'mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/80 transition-all duration-300',
           isSidebarCollapsed ? 'max-w-[1650px]' : 'max-w-7xl'
@@ -248,10 +255,12 @@
         </div>
       </div>
 
+      <!-- Khung chứa nội dung Component của từng Tab -->
       <div 
         :class="[
-          'mx-auto pb-12 transition-all duration-300',
-          isSidebarCollapsed ? 'max-w-[1650px]' : 'max-w-7xl'
+          'mx-auto transition-all duration-300',
+          isSidebarCollapsed ? 'max-w-[1650px]' : 'max-w-7xl',
+          activeTab.id === 'ref_library' ? 'h-full' : 'pb-12'
         ]"
       >
         <transition name="fade" mode="out-in">
@@ -436,4 +445,4 @@ const handleLockAdmin = () => {
     passwordInputRef.value?.focus()
   })
 }
-</script>
+</script> 

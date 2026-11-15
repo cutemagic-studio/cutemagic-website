@@ -301,6 +301,38 @@ function localRefLibraryPlugin() {
           }
         }
 
+        // 7.5. OPEN FILE IN WINDOWS EXPLORER (Mở thư mục và bôi đậm đúng file ảnh)
+        if (actionPath === 'open_in_folder' && req.method === 'POST') {
+          try {
+            const { windowsPath } = await parseBody(req)
+            const cleanPath = path.normalize(String(windowsPath || '').trim())
+
+            if (!cleanPath) {
+              return sendJson(res, 400, { ok: false, error: 'Đường dẫn trống!' })
+            }
+
+            if (fs.existsSync(cleanPath)) {
+              // Mở Windows Explorer và trỏ (highlight) thẳng vào file ảnh
+              execFile('explorer.exe', [`/select,${cleanPath}`], () => {})
+              return sendJson(res, 200, { ok: true, mode: 'select_file', path: cleanPath })
+            }
+
+            // Nếu file không còn nhưng thư mục cha vẫn tồn tại -> Mở thư mục cha
+            const parentDir = path.dirname(cleanPath)
+            if (fs.existsSync(parentDir)) {
+              execFile('explorer.exe', [parentDir], () => {})
+              return sendJson(res, 200, { ok: true, mode: 'open_dir', path: parentDir })
+            }
+
+            return sendJson(res, 404, {
+              ok: false,
+              error: `Không tìm thấy file hoặc thư mục trên ổ đĩa: ${cleanPath}`
+            })
+          } catch (err) {
+            return sendJson(res, 500, { ok: false, error: err.message })
+          }
+        }
+
         // 8. STREAM IMAGE FROM WINDOWS DISK
         if (actionPath === 'image') {
           try {
