@@ -594,6 +594,33 @@ export function createRefItemActionsModule({
     }
   }
 
+  // Xóa vĩnh viễn hàng loạt các ảnh đã chọn khỏi cả 2 bảng Firebase
+  const handleBatchPermanentDeleteItems = async () => {
+    if (!selectedKeys.value.length) return
+
+    const confirmed = await notify.confirm({
+      title: 'Xóa vĩnh viễn hàng loạt các ảnh đã chọn?',
+      message: `Toàn bộ ${selectedKeys.value.length} bản ghi ảnh đang chọn sẽ bị xóa vĩnh viễn khỏi cơ sở dữ liệu trên Firebase (File gốc trên ổ đĩa Windows vẫn được giữ nguyên). Thao tác này không thể hoàn tác!`,
+      highlightText: `${selectedKeys.value.length} ảnh trong Thùng rác`,
+      confirmText: '⚠️ Xóa vĩnh viễn tất cả',
+      cancelText: 'Hủy',
+      variant: 'danger',
+      icon: '⚠️'
+    })
+    if (!confirmed) return
+
+    selectedKeys.value.forEach(k => {
+      delete physicalData.value.items[k]
+      delete virtualData.value.items[k]
+    })
+
+    const count = selectedKeys.value.length
+    selectedKeys.value = []
+
+    await saveBothTablesToFirebase(`Xóa vĩnh viễn hàng loạt ${count} ảnh từ Thùng rác`)
+    notify.success('Đã xóa vĩnh viễn!', `Đã dọn dẹp thành công ${count} bản ghi khỏi Database.`)
+  }
+
   return {
     draggingImageKeys,
     dragOverCategoryId,
@@ -614,6 +641,7 @@ export function createRefItemActionsModule({
     handlePermanentDeleteSingleItem,
     confirmRenameFileOnWindows,
     handleManualBackup,
-    handleRollbackBackup
+    handleRollbackBackup,
+    handleBatchPermanentDeleteItems
   }
 }

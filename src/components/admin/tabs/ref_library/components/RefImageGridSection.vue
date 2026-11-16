@@ -77,11 +77,21 @@
           >
             🗑️ Xóa mềm ({{ store.selectedKeys.length }})
           </button>
+
+          <button
+            v-if="store.selectedFilter === 'TRASH_ITEMS'"
+            type="button"
+            @click="store.handleBatchPermanentDeleteItems"
+            class="px-4 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-black cursor-pointer shadow-lg animate-pulse"
+            title="Xóa vĩnh viễn toàn bộ các ảnh đang chọn khỏi Database"
+          >
+            🔥 Xóa vĩnh viễn hàng loạt ({{ store.selectedKeys.length }})
+          </button>
         </template>
       </div>
     </div>
 
-    <!-- Lưới hiển thị Ảnh -->
+    <!-- Lưới hiển thị Ảnh --> 
     <div
       v-if="store.paginatedImages.length > 0"
       class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"

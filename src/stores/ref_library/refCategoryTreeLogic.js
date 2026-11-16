@@ -510,6 +510,8 @@ export function createRefCategoryTreeModule({
     )
   }
 
+  
+
   return {
     collapsedCategoryIds,
     isCategoryCollapsed,
