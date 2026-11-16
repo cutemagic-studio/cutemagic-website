@@ -10,7 +10,8 @@ export function createRefCategoryTreeModule({
   selectedFilter,
   categoryModal,
   notify,
-  saveVirtualToFirebase
+  saveVirtualToFirebase,
+  savePhysicalToFirebase
 }) {
   const loadInitialCollapsed = () => {
     try {
@@ -39,7 +40,7 @@ export function createRefCategoryTreeModule({
     persistCollapsedState()
   }
 
-  // Lấy danh sách Category Ảo và Category Thật chưa bị xóa (Và cha của chúng cũng chưa bị xóa)
+  // Lấy danh sách Category Ảo và Category Thật chưa bị xóa (Và cha của chúng cũng chưa bị xóa) 
   const filterTrulyActiveCategories = (rawList) => {
     const nonDeleted = (rawList || []).filter(c => !c.deleted_at)
     const nonDeletedMap = new Map(nonDeleted.map(c => [c.id, c]))
@@ -443,7 +444,46 @@ export function createRefCategoryTreeModule({
     await saveVirtualToFirebase(`Xóa vĩnh viễn Category ảo: ${tCat.name}`)
   }
 
-  
+  // Xóa vĩnh viễn bản ghi Folder Thật khỏi Database (Không đụng đến file gốc trên máy tính)
+  const handleDeletePhysicalFolderRecord = async (node) => {
+    if (!node?.isPhysicalFolder) return
+
+    const descendantSet = getDescendantCategoryIds(node.id, true)
+    const childCount = descendantSet.size - 1
+
+    const confirmed = await notify.confirm({
+      title: 'Xác nhận xóa bản ghi Folder Thật khỏi Database?',
+      message: childCount > 0
+        ? `Thư mục "${node.name}" và ${childCount} thư mục con sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. Các file ảnh gốc trên ổ đĩa Windows được giữ nguyên 100% không bị ảnh hưởng.`
+        : `Thư mục "${node.name}" sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. File ảnh gốc trên ổ đĩa Windows được giữ nguyên 100%.`,
+      highlightText: `${node.icon || '📂'} ${node.name} (Chỉ xóa bản ghi Database)`,
+      confirmText: 'Đồng ý Xóa khỏi Database',
+      cancelText: 'Hủy',
+      variant: 'danger',
+      icon: '🗑️'
+    })
+    if (!confirmed) return
+
+    // 1. Xóa các Category Thật trong nhánh khỏi mảng `physicalData.categories`
+    physicalData.value.categories = (physicalData.value.categories || []).filter(
+      c => !descendantSet.has(c.id)
+    )
+
+    // 2. Gỡ liên kết `physicalCategoryId` của các ảnh thuộc nhánh này
+    Object.values(physicalData.value.items || {}).forEach(item => {
+      if (descendantSet.has(item.physicalCategoryId)) {
+        item.physicalCategoryId = ''
+      }
+    })
+
+    if (descendantSet.has(selectedFilter.value)) {
+      selectedFilter.value = 'ALL'
+    }
+
+    // GỌI HÀM LƯU BẢNG THẬT LÊN FIREBASE
+    await savePhysicalToFirebase(`Xóa bản ghi Folder Thật: ${node.name}`)
+    notify.success('Đã xóa khỏi Database!', `Đã gỡ bỏ bản ghi "${node.name}" (File gốc trên Windows vẫn an toàn).`)
+  }
 
   return {
     collapsedCategoryIds,
@@ -468,6 +508,7 @@ export function createRefCategoryTreeModule({
     handleMoveCategoryOrder,
     handleSoftDeleteCategory,
     handleRestoreCategory,
-    handlePermanentDeleteCategory
+    handlePermanentDeleteCategory,
+    handleDeletePhysicalFolderRecord
   }
 }

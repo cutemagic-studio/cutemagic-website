@@ -290,7 +290,7 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     return ''
   }
 
-  // ==========================================================================
+  // ========================================================================== 
   // 2. KHỞI TẠO MODULE CÂY CATEGORY & BỘ ĐẾM CHÍNH XÁC (LOẠI BỎ CATEGORY ĐÃ XÓA)
   // ==========================================================================
   const categoryTreeModule = createRefCategoryTreeModule({
@@ -299,7 +299,9 @@ export const useRefLibraryStore = defineStore('refLibrary', () => {
     selectedFilter,
     categoryModal,
     notify,
-    saveVirtualToFirebase
+    saveVirtualToFirebase,
+    savePhysicalToFirebase,
+    saveBothTablesToFirebase
   })
 
   // Tập ID của các Category Thật & Category Ảo đang hoạt động (Không bị xóa mềm)

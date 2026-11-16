@@ -346,10 +346,10 @@
             </span>
 
             <!-- NẾU LÀ CATEGORY THẬT TRÊN Ổ ĐĨA: CHỈ HIỆN NÚT 🔄 REFRESH DATA -->
-            <button
+            <!-- <button
               v-if="node.isPhysicalFolder"
               type="button"
-              :disabled="store.isScanning"
+              :disabled="store.isScanning" 
               @click.stop="store.handleRefreshPhysicalCategory(node)"
               class="w-5 h-5 rounded text-[10px] font-black flex items-center justify-center transition-all cursor-pointer"
               :class="store.selectedFilter === node.id
@@ -358,7 +358,33 @@
               :title="`🔄 Làm mới (Refresh) thư mục '${node.name}' từ ổ đĩa Windows & đồng bộ sang Category Ảo`"
             >
               🔄
+            </button> -->
+
+            <div v-if="node.isPhysicalFolder" class="flex items-center gap-1">
+            <!-- Nút Refresh -->
+            <button
+              type="button"
+              :disabled="store.isScanning"
+              @click.stop="store.handleRefreshPhysicalCategory(node)"
+              class="w-5 h-5 rounded text-[10px] font-black flex items-center justify-center transition-all cursor-pointer"
+              :class="store.selectedFilter === node.id
+                ? 'bg-emerald-500 text-white shadow'
+                : 'opacity-0 group-hover:opacity-100 bg-white/90 hover:bg-emerald-600 text-emerald-800 hover:text-white border border-emerald-300'"
+              :title="`🔄 Làm mới (Refresh) thư mục '${node.name}' từ ổ đĩa Windows`"
+            >
+              🔄
             </button>
+
+            <!-- NÚT XÓA BẢN GHI FOLDER THẬT KHỎI DATABASE -->
+            <button
+              type="button"
+              @click.stop="store.handleDeletePhysicalFolderRecord(node)"
+              class="w-5 h-5 rounded text-[10px] font-black flex items-center justify-center transition-all cursor-pointer opacity-0 group-hover:opacity-100 bg-white/90 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-300"
+              title="🗑️ Xóa bản ghi thư mục này khỏi Database (Không xóa file trên máy tính)"
+            >
+              🗑️
+            </button>
+          </div>
 
             <!-- NẾU LÀ CATEGORY ẢO: HIỆN CÁC NÚT THAO TÁC (▲ ▼ + ✏️ 🗑️) -->
             <div v-else class="hidden group-hover:flex items-center gap-0.5">
