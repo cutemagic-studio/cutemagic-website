@@ -444,45 +444,70 @@ export function createRefCategoryTreeModule({
     await saveVirtualToFirebase(`Xóa vĩnh viễn Category ảo: ${tCat.name}`)
   }
 
-  // Xóa vĩnh viễn bản ghi Folder Thật khỏi Database (Không đụng đến file gốc trên máy tính)
+  // Xóa vĩnh viễn bản ghi Folder Thật và toàn bộ ảnh thuộc nhánh đó khỏi Database
   const handleDeletePhysicalFolderRecord = async (node) => {
     if (!node?.isPhysicalFolder) return
 
+    // Lấy toàn bộ ID của Category Thật này và các thư mục con cháu bên trong
     const descendantSet = getDescendantCategoryIds(node.id, true)
     const childCount = descendantSet.size - 1
 
+    // Đếm trước số lượng ảnh vật lý thuộc nhánh này sẽ bị xóa cùng
+    const branchItemsCount = Object.values(physicalData.value.items || {}).filter(
+      item => descendantSet.has(item.physicalCategoryId)
+    ).length
+
     const confirmed = await notify.confirm({
-      title: 'Xác nhận xóa bản ghi Folder Thật khỏi Database?',
+      title: 'Xác nhận xóa thư mục thật và toàn bộ ảnh bên trong?',
       message: childCount > 0
-        ? `Thư mục "${node.name}" và ${childCount} thư mục con sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. Các file ảnh gốc trên ổ đĩa Windows được giữ nguyên 100% không bị ảnh hưởng.`
-        : `Thư mục "${node.name}" sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. File ảnh gốc trên ổ đĩa Windows được giữ nguyên 100%.`,
-      highlightText: `${node.icon || '📂'} ${node.name} (Chỉ xóa bản ghi Database)`,
-      confirmText: 'Đồng ý Xóa khỏi Database',
+        ? `Thư mục "${node.name}" (${childCount} thư mục con) và toàn bộ ${branchItemsCount} hình ảnh bên trong sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. File gốc trên ổ đĩa Windows không bị ảnh hưởng.`
+        : `Thư mục "${node.name}" và ${branchItemsCount} hình ảnh bên trong sẽ bị xóa khỏi cơ sở dữ liệu trên Firebase. File gốc trên ổ đĩa Windows không bị ảnh hưởng.`,
+      highlightText: `${node.icon || '📂'} ${node.name} (${branchItemsCount} ảnh)`,
+      confirmText: 'Đồng ý Xóa Thư mục & Ảnh',
       cancelText: 'Hủy',
       variant: 'danger',
       icon: '🗑️'
     })
     if (!confirmed) return
 
-    // 1. Xóa các Category Thật trong nhánh khỏi mảng `physicalData.categories`
+    const now = getNowStr()
+
+    // 1. Xóa các Category Thật thuộc nhánh này trong bảng `physicalData.categories`
     physicalData.value.categories = (physicalData.value.categories || []).filter(
       c => !descendantSet.has(c.id)
     )
 
-    // 2. Gỡ liên kết `physicalCategoryId` của các ảnh thuộc nhánh này
-    Object.values(physicalData.value.items || {}).forEach(item => {
+    // 2. Xóa toàn bộ ảnh vật lý (`physicalData.items`) thuộc nhánh thư mục này
+    const removedWinPathsSet = new Set()
+    Object.entries(physicalData.value.items || {}).forEach(([key, item]) => {
       if (descendantSet.has(item.physicalCategoryId)) {
-        item.physicalCategoryId = ''
+        removedWinPathsSet.add(key.toLowerCase())
+        delete physicalData.value.items[key]
       }
     })
 
+    // 3. Đồng thời dọn dẹp sạch sẽ các ảnh tương ứng trong Bảng Ảo (`virtualData.items`)
+    Object.entries(virtualData.value.items || {}).forEach(([vKey, vItem]) => {
+      const cleanKey = String(vItem.windowsPath || vKey).toLowerCase()
+      if (
+        removedWinPathsSet.has(cleanKey) ||
+        descendantSet.has(vItem.physicalCategoryId)
+      ) {
+        delete virtualData.value.items[vKey]
+      }
+    })
+
+    // Nếu bộ lọc hiện tại đang chọn chính nhánh thư mục vừa xóa -> Chuyển về 'ALL' 
     if (descendantSet.has(selectedFilter.value)) {
       selectedFilter.value = 'ALL'
     }
 
-    // GỌI HÀM LƯU BẢNG THẬT LÊN FIREBASE
-    await savePhysicalToFirebase(`Xóa bản ghi Folder Thật: ${node.name}`)
-    notify.success('Đã xóa khỏi Database!', `Đã gỡ bỏ bản ghi "${node.name}" (File gốc trên Windows vẫn an toàn).`)
+    // 4. Lưu đồng thời thay đổi lên cả 2 bảng trên Firebase để cập nhật lại toàn bộ bộ đếm
+    await saveBothTablesToFirebase(`Xóa thư mục thật và ${branchItemsCount} ảnh: ${node.name}`)
+    notify.success(
+      'Đã xóa thành công!',
+      `Đã gỡ bỏ thư mục "${node.name}" và ${branchItemsCount} ảnh khỏi Database. Bộ đếm đã được cập nhật lại.`
+    )
   }
 
   return {
